@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Container Supply Info Hub</title>
+
+<!-- ============================================================= -->
+<!--  FONTS                                                        -->
+<!-- ============================================================= -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===============================================================
+   THEME TOKENS  — change colors / spacing in ONE place here
+   =============================================================== */
+:root{
+  --ink:        #1b1e23;   /* darkest charcoal (top bar + text)     */
+  --steel-900:  #20252b;
+  --steel-700:  #3a444d;
+  --steel-500:  #5e6973;
+  --steel-300:  #9aa4ad;
+  --paper:      #f3f1ec;   /* page background (warm off-white)      */
+  --surface:    #ffffff;   /* card background                        */
+  --line:       #e2ddd2;   /* hairline borders                       */
+  --amber:      #db8417;   /* PRIMARY accent (safety amber)          */
+  --amber-soft: #fbf0dd;
+  --blue:       #2c6e8c;   /* secondary accent (can / steel blue)    */
+  --green:      #4f9d69;   /* "online" status dot                    */
+  --shadow:     0 1px 2px rgba(27,30,35,.06), 0 8px 24px rgba(27,30,35,.06);
+  --radius:     10px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'IBM Plex Sans',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.5;
+  /* subtle industrial grid texture */
+  background-image:
+    linear-gradient(rgba(27,30,35,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27,30,35,.025) 1px, transparent 1px);
+  background-size:46px 46px;
+}
+
+/* utility text */
+.mono{font-family:'IBM Plex Mono',monospace}
+.kicker{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--amber);font-weight:600;
+}
+
+/* ===============================================================
+   TOP BAR
+   =============================================================== */
+header.topbar{
+  background:var(--ink);
+  color:#f3f1ec;
+  border-bottom:3px solid var(--amber);
+  position:sticky;top:0;z-index:50;
+}
+.topbar-inner{
+  max-width:1240px;margin:0 auto;padding:14px 28px;
+  display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:14px;flex:1 1 auto;min-width:240px}
+.mark{
+  width:44px;height:44px;flex:none;border:2px solid var(--amber);
+  border-radius:8px;display:grid;place-items:center;
+  font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:1.5rem;
+  color:var(--amber);background:rgba(219,132,23,.08);
+}
+.brand h1{
+  font-family:'Saira Condensed',sans-serif;font-weight:700;
+  font-size:1.55rem;letter-spacing:.01em;line-height:1;text-transform:uppercase;
+}
+.brand .sub{
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--steel-300);margin-top:4px;
+}
+.clock{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--steel-300);
+  text-align:right;line-height:1.45;white-space:nowrap;
+}
+.clock .time{color:#f3f1ec;font-weight:500}
+.clock .dot{color:var(--green)}
+
+/* search */
+.search-wrap{position:relative;flex:0 1 300px;min-width:200px}
+.search-wrap input{
+  width:100%;padding:10px 14px 10px 38px;border-radius:8px;border:1px solid var(--steel-700);
+  background:var(--steel-900);color:#f3f1ec;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;
+}
+.search-wrap input::placeholder{color:var(--steel-500)}
+.search-wrap input:focus{outline:none;border-color:var(--amber)}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;stroke:var(--steel-500)}
+
+/* ===============================================================
+   ANNOUNCEMENT STRIP
+   =============================================================== */
+.announce{
+  max-width:1240px;margin:26px auto 0;padding:0 28px;
+}
+.announce-card{
+  display:flex;gap:16px;align-items:flex-start;
+  background:linear-gradient(180deg,var(--amber-soft),#fff);
+  border:1px solid #f0dcb8;border-left:4px solid var(--amber);
+  border-radius:var(--radius);padding:18px 22px;
+}
+.announce-card .badge{
+  font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.14em;
+  text-transform:uppercase;background:var(--amber);color:#fff;padding:4px 9px;border-radius:5px;
+  font-weight:600;flex:none;margin-top:2px;
+}
+.announce-card .body strong{display:block;font-size:1.02rem;margin-bottom:2px}
+.announce-card .body span{font-size:.9rem;color:var(--steel-700)}
+
+/* ===============================================================
+   QUICK LINKS
+   =============================================================== */
+main{max-width:1240px;margin:0 auto;padding:34px 28px 70px}
+.section-head{display:flex;align-items:baseline;gap:14px;margin:34px 0 16px}
+.section-head .num{
+  font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:var(--amber);font-weight:600;
+}
+.section-head h2{
+  font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.45rem;
+  text-transform:uppercase;letter-spacing:.02em;
+}
+.section-head .rule{flex:1;height:1px;background:var(--line)}
+
+.quick-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:12px;
+}
+.quick{
+  display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;transition:.16s;box-shadow:var(--shadow);
+}
+.quick:hover{border-color:var(--amber);transform:translateY(-2px)}
+.quick .ico{
+  width:34px;height:34px;flex:none;border-radius:8px;display:grid;place-items:center;
+  background:var(--amber-soft);color:var(--amber);font-size:1.1rem;
+}
+.quick .label{font-weight:600;font-size:.92rem;line-height:1.15}
+.quick .label small{display:block;font-weight:400;color:var(--steel-500);font-size:.72rem;margin-top:2px}
+
+/* ===============================================================
+   CATEGORY CARDS
+   =============================================================== */
+.cat-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;
+}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;
+}
+.card-top{
+  padding:16px 18px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px;
+}
+.card-top .swatch{width:8px;align-self:stretch;border-radius:3px;background:var(--blue)}
+.card-top h3{
+  font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:1.18rem;
+  text-transform:uppercase;letter-spacing:.02em;flex:1;
+}
+.card-top .tag{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.1em;
+  color:var(--steel-500);text-transform:uppercase;border:1px solid var(--line);
+  padding:3px 7px;border-radius:5px;
+}
+.card-links{list-style:none;padding:8px 8px 12px}
+.card-links li a{
+  display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--steel-700);
+  padding:9px 12px;border-radius:7px;font-size:.92rem;transition:.13s;
+}
+.card-links li a:hover{background:var(--paper);color:var(--ink)}
+.card-links li a .arrow{margin-left:auto;color:var(--steel-300);transition:.13s}
+.card-links li a:hover .arrow{color:var(--amber);transform:translateX(3px)}
+.card-links li a.ext .arrow::after{content:'\2197'}      /* external ↗ */
+.card-links li a:not(.ext) .arrow::after{content:'\2192'} /* internal → */
+.pill-new{
+  font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.08em;
+  background:var(--green);color:#fff;padding:2px 6px;border-radius:4px;text-transform:uppercase;
+}
+
+/* no-results message */
+.no-results{display:none;text-align:center;color:var(--steel-500);padding:50px 0;font-size:.95rem}
+.no-results.show{display:block}
+
+/* ===============================================================
+   FOOTER
+   =============================================================== */
+footer{
+  border-top:1px solid var(--line);background:var(--surface);
+}
+.footer-inner{
+  max-width:1240px;margin:0 auto;padding:22px 28px;
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--steel-500);letter-spacing:.04em;
+}
+.footer-inner a{color:var(--steel-700);text-decoration:none}
+.footer-inner a:hover{color:var(--amber)}
+
+/* ===============================================================
+   ENTRANCE ANIMATION
+   =============================================================== */
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.reveal{opacity:0;animation:rise .5s ease forwards}
+
+@media(max-width:560px){
+  .topbar-inner{gap:14px}
+  .clock{display:none}
+  .brand h1{font-size:1.3rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================= -->
+<!--  TOP BAR                                                      -->
+<!-- ============================================================= -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="mark">CS</div>
+      <div>
+        <h1>Container Supply Info&nbsp;Hub</h1>
+        <div class="sub">Internal Reference Portal &bull; Garden Grove, CA</div>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="text" placeholder="Search the hub…" autocomplete="off">
+    </div>
+
+    <div class="clock" id="clock">
+      <div class="time" id="clock-time">—</div>
+      <div><span class="dot">●</span> <span id="clock-date">—</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================= -->
+<!--  ANNOUNCEMENT  (rendered from CONFIG below)                   -->
+<!-- ============================================================= -->
+<section class="announce" id="announce-mount"></section>
+
+<!-- ============================================================= -->
+<!--  MAIN CONTENT  (rendered from CONFIG below)                   -->
+<!-- ============================================================= -->
+<main>
+  <!-- QUICK LINKS -->
+  <div class="section-head">
+    <span class="num">01</span>
+    <h2>Quick Links</h2>
+    <span class="rule"></span>
+  </div>
+  <div class="quick-grid" id="quick-mount"></div>
+
+  <!-- CATEGORIES -->
+  <div class="section-head">
+    <span class="num">02</span>
+    <h2>Resources &amp; Reference</h2>
+    <span class="rule"></span>
+  </div>
+  <div class="cat-grid" id="cat-mount"></div>
+
+  <div class="no-results" id="no-results">No results match your search.</div>
+</main>
+
+<!-- ============================================================= -->
+<!--  FOOTER                                                       -->
+<!-- ============================================================= -->
+<footer>
+  <div class="footer-inner">
+    <div>CONTAINER SUPPLY CO. &bull; INTERNAL USE ONLY</div>
+    <div>REV <span id="rev">1.0</span> &bull; UPDATED <span id="updated">—</span> &bull; <a href="mailto:webmaster@cscmfg.com">REPORT A BROKEN LINK</a></div>
+  </div>
+</footer>
+
+
+<script>
+/* ===================================================================
+   ███  EDIT EVERYTHING BELOW — THIS IS THE ONLY PART YOU TOUCH  ███
+   -------------------------------------------------------------------
+   To add a new page, just add a line to the right list:
+     { name:'Page Title', href:'pages/your-file.html' }
+
+   • href = 'pages/foo.html'  -> a page you create (internal link)
+   • href = 'https://…'       -> an outside website (shows ↗ icon)
+   • add  new:true            -> shows a small green "NEW" tag
+   • add  ext:true            -> forces the external ↗ icon
+
+   Lines starting with // are notes to yourself and are ignored.
+   =================================================================== */
+
+const CONFIG = {
+
+  /* ---- footer info: bump these whenever you revise the page ---- */
+  revision: '1.0',
+  updated:  'Jun 2026',
+
+  /* ---- the amber banner at the top. Edit text or set show:false -- */
+  announcement: {
+    show:  true,
+    badge: 'Notice',
+    title: 'SQF Edition 10 internal audit prep is underway.',
+    text:  'Review the updated food safety procedures and complete your section sign-offs before the mock audit.'
+  },
+
+  /* ---- QUICK LINKS row (the small tiles) ----------------------- */
+  /* icon = any emoji/letter; sub = optional small grey caption     */
+  quickLinks: [
+    { icon:'⚗',  label:'SDS Lookup',          sub:'Safety data sheets',href:'#', ext:true },
+    { icon:'🔧', label:'Maintenance Request',  sub:'Submit a request',  href:'#', ext:true },
+    { icon:'📞', label:'Staff Directory',      sub:'Phone & extensions',href:'#' }
+  ],
+
+  /* ---- CATEGORY CARDS -----------------------------------------
+     Each card: a title, an accent color, an optional short tag,
+     and a list of links. Add / remove cards freely.
+     accent options used here: blue, amber, green, steel  (any hex works too)
+  ---------------------------------------------------------------- */
+  categories: [
+    {
+      title:'Quality & Food Safety',
+      accent:'#2c6e8c', tag:'FSC 27',
+      links:[
+        { name:'SQF System Manual (Ed. 10)',  href:'#', new:true },
+        { name:'HACCP / Food Safety Plans',   href:'#' },
+        { name:'Product Specifications',      href:'#' },
+        { name:'CAPA & Corrective Action Log',href:'#' },
+        { name:'Supplier Approval Program',   href:'#' },
+        { name:'Internal Audit Schedule',     href:'#' }
+      ]
+    },
+    {
+      title:'Production & Operations',
+      accent:'#db8417', tag:'Plant',
+      links:[
+        { name:'Daily Run Schedule',          href:'#' },
+        { name:'3-Piece Can Line — SOPs',     href:'#' },
+        { name:'Injection Molding — SOPs',    href:'#' },
+        { name:'Maintenance Requests',        href:'#' },
+        { name:'OEE / Production Reports',    href:'#' }
+      ]
+    },
+    {
+      title:'Documents & Forms',
+      accent:'#5e6973', tag:'Templates',
+      links:[
+        { name:'SOP Library',                 href:'#' },
+        { name:'Inspection / QA Forms',       href:'#' },
+        { name:'Nonconformance Report Form',  href:'#' },
+        { name:'Change Request Form',         href:'#' },
+        { name:'Document Control Index',      href:'#' }
+      ]
+    },
+    {
+      title:'Safety & Compliance',
+      accent:'#4f9d69', tag:'EHS',
+      links:[
+        { name:'Safety Data Sheets (SDS)',    href:'#' },
+        { name:'Incident Reporting',          href:'#' },
+        { name:'Lockout / Tagout Procedures', href:'#' },
+        { name:'PPE Requirements',            href:'#' },
+        { name:'Emergency Contacts',          href:'#' }
+      ]
+    },
+    {
+      title:'HR & Administration',
+      accent:'#2c6e8c', tag:'People',
+      links:[
+        { name:'PTO & Time-Off Requests',     href:'#', ext:true },
+        { name:'Benefits Portal',             href:'#', ext:true },
+        { name:'Employee Handbook',           href:'#' },
+        { name:'Training Records',            href:'#' },
+        { name:'Org Chart',                   href:'#' }
+      ]
+    },
+    {
+      title:'Tools & Utilities',
+      accent:'#db8417', tag:'Calc',
+      links:[
+        { name:'Unit Converter',              href:'#' },
+        { name:'Label / Lot Code Generator',  href:'#' },
+        { name:'Shift Calendar',              href:'#' },
+        { name:'Warehouse Exhaust Fan Requirement Calculator', href:'#', new:true },
+        { name:'Shared Drive',                href:'#', ext:true }
+      ]
+    }
+  ]
+};
+
+/* ===================================================================
+   ███  RENDER ENGINE — no need to edit anything below this line  ███
+   =================================================================== */
+(function(){
+  const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  /* footer */
+  document.getElementById('rev').textContent = CONFIG.revision;
+  document.getElementById('updated').textContent = (CONFIG.updated||'').toUpperCase();
+
+  /* announcement */
+  const a = CONFIG.announcement;
+  if(a && a.show){
+    document.getElementById('announce-mount').innerHTML =
+      `<div class="announce-card reveal">
+         <span class="badge">${esc(a.badge||'Notice')}</span>
+         <div class="body"><strong>${esc(a.title||'')}</strong><span>${esc(a.text||'')}</span></div>
+       </div>`;
+  }
+
+  /* quick links */
+  document.getElementById('quick-mount').innerHTML = CONFIG.quickLinks.map((q,i)=>
+    `<a class="quick reveal" style="animation-delay:${i*40}ms" href="${esc(q.href||'#')}" ${q.ext?'target="_blank" rel="noopener"':''}>
+       <span class="ico">${esc(q.icon||'•')}</span>
+       <span class="label">${esc(q.label)}${q.sub?`<small>${esc(q.sub)}</small>`:''}</span>
+     </a>`).join('');
+
+  /* category cards */
+  document.getElementById('cat-mount').innerHTML = CONFIG.categories.map((cat,i)=>{
+    const links = cat.links.map(l=>{
+      const isExt = l.ext || /^https?:\/\//.test(l.href||'');
+      return `<li><a class="${isExt?'ext':''}" href="${esc(l.href||'#')}" ${isExt?'target="_blank" rel="noopener"':''}>
+                <span>${esc(l.name)}</span>
+                ${l.new?'<span class="pill-new">New</span>':''}
+                <span class="arrow"></span>
+              </a></li>`;
+    }).join('');
+    return `<div class="card reveal" style="animation-delay:${i*60}ms" data-card>
+              <div class="card-top">
+                <span class="swatch" style="background:${esc(cat.accent||'#2c6e8c')}"></span>
+                <h3>${esc(cat.title)}</h3>
+                ${cat.tag?`<span class="tag">${esc(cat.tag)}</span>`:''}
+              </div>
+              <ul class="card-links">${links}</ul>
+            </div>`;
+  }).join('');
+
+  /* live clock — Pacific time */
+  function tick(){
+    const now = new Date();
+    const opts = {timeZone:'America/Los_Angeles'};
+    document.getElementById('clock-time').textContent =
+      now.toLocaleTimeString('en-US',{...opts,hour:'2-digit',minute:'2-digit'});
+    document.getElementById('clock-date').textContent =
+      now.toLocaleDateString('en-US',{...opts,weekday:'short',month:'short',day:'numeric'});
+  }
+  tick(); setInterval(tick,1000);
+
+  /* search filter */
+  const input = document.getElementById('search');
+  const noRes = document.getElementById('no-results');
+  input.addEventListener('input', ()=>{
+    const q = input.value.trim().toLowerCase();
+    let anyVisible = false;
+    document.querySelectorAll('[data-card]').forEach(card=>{
+      const title = card.querySelector('h3').textContent.toLowerCase();
+      let matchInCard = false;
+      card.querySelectorAll('.card-links li').forEach(li=>{
+        const txt = li.textContent.toLowerCase();
+        const hit = !q || txt.includes(q) || title.includes(q);
+        li.style.display = hit ? '' : 'none';
+        if(hit) matchInCard = true;
+      });
+      card.style.display = (matchInCard || !q) ? '' : 'none';
+      if(card.style.display !== 'none') anyVisible = true;
+    });
+    noRes.classList.toggle('show', q && !anyVisible);
+  });
+})();
+</script>
+</body>
+</html>
