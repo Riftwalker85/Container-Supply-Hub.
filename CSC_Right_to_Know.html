@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSC Right to Know – SDS Library</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:    #1a4f8a;
+      --blue-lt: #2563ae;
+      --accent:  #e8501a;
+      --bg:      #f4f6fa;
+      --card:    #ffffff;
+      --border:  #d4dae6;
+      --text:    #1c2333;
+      --muted:   #6b7591;
+      --shadow:  0 2px 8px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--blue);
+      color: #fff;
+      padding: 20px 32px 18px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+    .logo-mark {
+      width: 48px; height: 48px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 20px; color: #fff; flex-shrink: 0;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; line-height: 1.2; }
+    header p  { font-size: .8rem; opacity: .75; margin-top: 2px; }
+    .header-right { margin-left: auto; text-align: right; font-size: .75rem; opacity: .65; }
+
+    /* ── Search bar ── */
+    .search-wrap {
+      background: var(--blue-lt);
+      padding: 20px 32px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .search-wrap label { color: #fff; font-weight: 600; font-size: .875rem; white-space: nowrap; }
+    #search {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+      box-shadow: 0 0 0 2px transparent;
+      transition: box-shadow .15s;
+    }
+    #search:focus { box-shadow: 0 0 0 3px rgba(255,255,255,.5); }
+    #result-count { color: rgba(255,255,255,.8); font-size: .8rem; white-space: nowrap; min-width: 80px; text-align: right; }
+    #clear-btn {
+      background: rgba(255,255,255,.2);
+      border: none; color: #fff;
+      padding: 9px 14px; border-radius: 6px;
+      cursor: pointer; font-size: .85rem;
+      transition: background .15s;
+    }
+    #clear-btn:hover { background: rgba(255,255,255,.35); }
+
+    /* ── Main layout ── */
+    main { max-width: 1280px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    /* ── Category section ── */
+    .category {
+      margin-bottom: 28px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .cat-header {
+      background: var(--blue);
+      color: #fff;
+      padding: 13px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cat-header:hover { background: var(--blue-lt); }
+    .cat-icon { font-size: 1.2rem; }
+    .cat-title { font-weight: 700; font-size: 1rem; flex: 1; }
+    .cat-count {
+      background: rgba(255,255,255,.2);
+      padding: 2px 9px;
+      border-radius: 12px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .cat-chevron { transition: transform .2s; font-size: .8rem; }
+    .category.collapsed .cat-chevron { transform: rotate(-90deg); }
+    .category.collapsed .cat-body { display: none; }
+
+    /* ── Sub-category ── */
+    .cat-body { background: var(--card); }
+    .subcat { border-top: 1px solid var(--border); }
+    .subcat:first-child { border-top: none; }
+    .subcat-label {
+      background: #eef2f9;
+      padding: 7px 20px;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--blue);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Document grid ── */
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1px;
+      background: var(--border);
+    }
+    .doc-item {
+      background: var(--card);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      text-decoration: none;
+      color: var(--text);
+      transition: background .12s;
+    }
+    .doc-item:hover { background: #f0f4ff; }
+    .doc-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+    .doc-name {
+      font-size: .82rem;
+      font-weight: 500;
+      line-height: 1.35;
+      color: var(--blue-lt);
+      word-break: break-word;
+    }
+    .doc-name:hover { text-decoration: underline; }
+    .doc-tag {
+      margin-top: 3px;
+      display: inline-block;
+      font-size: .68rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .tag-sds   { background: #dbeafe; color: #1e40af; }
+    .tag-tds   { background: #fef3c7; color: #92400e; }
+    .tag-reg   { background: #d1fae5; color: #065f46; }
+    .tag-ref   { background: #f3e8ff; color: #6b21a8; }
+    .tag-label { background: #fee2e2; color: #991b1b; }
+
+    /* ── No-results ── */
+    #no-results {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    #no-results span { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: .75rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* hidden by search */
+    .doc-item.hidden { display: none; }
+    .subcat.empty   { display: none; }
+    .category.empty { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">CSC</div>
+  <div>
+    <h1>Right to Know – SDS Library</h1>
+    <p>Container Supply Company &nbsp;·&nbsp; Safety Data Sheet Repository</p>
+  </div>
+  <div class="header-right">SQF Ed. 9 · Modules 2 &amp; 13<br>Updated June 2026</div>
+</header>
+
+<div class="search-wrap">
+  <label for="search">🔍 Search Documents</label>
+  <input type="text" id="search" placeholder="Search by product name, manufacturer, or category…" autocomplete="off" />
+  <span id="result-count"></span>
+  <button id="clear-btn" onclick="clearSearch()">Clear</button>
+</div>
+
+<main>
+  <div id="no-results">
+    <span>🔎</span>
+    No documents match your search. Try a different term.
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CATEGORY 1 – INKS & COATINGS – METAL
+  ══════════════════════════════════════════════ -->
+  <div class="category" id="cat-metal-inks">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-icon">🖨️</span>
+      <span class="cat-title">Inks &amp; Coatings – Metal</span>
+      <span class="cat-count" id="cnt-metal-inks"></span>
+      <span class="cat-chevron">▼</span>
+    </div>
+    <div class="cat-body">
+
+      <!-- PPG -->
+      <div class="subcat" id="subcat-ppg">
+        <div class="subcat-label">PPG</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/174yTsUN89gHcV3w5sc-sGL1hB1l-ERLV/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">PC11S15 PPG Aerosol Clear Size</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1yR_CMYaBToOkxpNygcyedoWhd6MN_aUg/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">CC2340 PPG Varnish</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1CrDkL-jw0Eyv6skgq_mg3RNWA_lYtC7w/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">PPG2004877 Gold Enamel</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1T96Ka5TnDrHy7yM3qUancghvsO9EXzTB/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">PPG4348807 Clear Exterior Enamel</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/11XQ_H-N-MZ4CBLAsSwn8v3kEJC-sy6zF/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">PPG8129050 White Basecoat</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Valspar -->
+      <div class="subcat" id="subcat-valspar">
+        <div class="subcat-label">Valspar</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1vPef0e8s8NZQl3gLK_QtyXZyXQXjaptN/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">31S46AM Gold Enamel (BPA-NI)</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1VN4pEOfSc-FmgNHo6MAyAr_-ZspDuvuf/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">31S46AM Regulatory Statement</div><span class="doc-tag tag-reg">REG</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1-nc4io5n9paqc5h8t93s4rSW8OF5h5mt/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">6256069 SDS</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1gLDy1ISm_YWzZ5DF2w-zEJJE9wkHMFPW/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">6256069 Regulatory Statement</div><span class="doc-tag tag-reg">REG</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1-dRIY3d6zcgudP4NXd2tBARwhDrxQWJU/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">51S01AB 28-128</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1GXw4MH4CQ4RWKoSgn1x392mns-KUmQSR/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Valspar Solvent 97X058A</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1o2OZ0rZaFwzQepNeuneGfbq1sFG7Y_n9/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Valspar Solvent 8512A23MV1</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1mpJs9K7iDt7dVdm4BDjL6zH8r_k8Oqm-/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Valspar Solvent 1447810</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1N872LCkngr_Bj_EbCj-LeJ96R0Opjrsu/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Valspar Solvent 1033501</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1Bfqnve3P7np6keddhpAGt4m8wrNgcg86/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">VP102 Clear</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1xZWgEzfDoAPXSLkU5J0EcS9GnG8FKVth/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">VP102 Regulatory Statement</div><span class="doc-tag tag-reg">REG</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1EoTH0_Ytq4UKK60FVKkn33E_I0WNq_8b/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Vecodur VP98BF Colourless</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1t_sEEbh90r8V_j0E488Ft2JhQC8XH0N-/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">VP98BF Regulatory Compliance Statement</div><span class="doc-tag tag-reg">REG</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1W3LrYlNKB8MezNCgAqQqVPGeAXw9mb4_/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">VP98BF FDA Compliance</div><span class="doc-tag tag-reg">REG</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1K7BbHziIxikZQETB_ZUNzrBrecGktXQ-/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">27S44AB</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1GrLtjcXK4if8jBULYyIA5SPs0mF2IBR6/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">21S10AA</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1t1A3emJ9C-bhXK-WWsc5Z55-vn4kFUng/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">27S92AE</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1Yo1hdv45432OLqxGb_Ci7kSExTmcXH4i/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">26S96EJ</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1rGTOeV-Jgq2BxpRAxxRsLMaGrSdnG8rB/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">90X066F</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1vgdxOyE8lzfgsmuXw1A7gb5zP3qidRlH/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">9372015</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1kPSds05jyPWbCMendLkNjFNCWYVUXOg7/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">9372535</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1WyJOb4pH6JxPvWi31Nw1aFQ4XAsStvR0/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">SW Regulatory Statement – All Products</div><span class="doc-tag tag-reg">REG</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1-O-LtPaJXyvYs5jAFdi6PFAjBdGdpILG/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">31S46 European Plastics Legislation</div><span class="doc-tag tag-reg">REG</span></div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Sun Chemical -->
+      <div class="subcat" id="subcat-sun">
+        <div class="subcat-label">Sun Chemical</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1poL79nLwVSlyYKZQZzThrf2dLh3hLdBO/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">DIAMETAL 7610C Brown</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1nSvdHNj2rpDTlRa-P9OaGw5SrLpAIWIK/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">DIAMETAL 2975C Blue</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1a7SXlKP69Jlw2mCPg_WbsBTsLgRDPYoH/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Diametal Dense Black</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1Esg7OWauXOXys33lBF6m6T_6ETqKw2-i/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">DIAMETAL PMS 253C Purple</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1UBaGfdmX65hpGJN9_WPgH68NuBiAIKef/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">DIAMETAL PMS 138C Yellow</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1UNYew4NpfUqBolwEh9kw-NnQtvX7JElu/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">DAIMETAL Antitack Additive</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1mZOq6QbUpESWNN1n4FekZJn8UGXY-hBu/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">DAIMETAL Niagara Blue</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1C1ZvDsXJFNG2kxqnKVLkHZPJTdaq_kMX/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">MDTZ 2756C Blue</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1Q_v4JyEmoZagOrL0MAxlykdkh2KBGCeH/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">MDTZ 647C Blue</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1mD2x8tjHo6zZTpP-CJXZgOvgzgxaR2um/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">MDTZ 355C Green</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1XPgyaTCV9rM2Mdvb8LujOKlVNqhn_60q/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">MDTZ 207C Red</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/17R6KQx36kgrq1unGJ3Fe4LOTeXDK1qCU/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">MDTZ Aroma Blue</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1qHxFKxCTLi4fXum0hHPzfC7xf84LVTTZ/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">MDTZ Aviation Blue</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1kXH9e7Wx7Z64MseJAnJ_GMVz18a1ismo/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">MDTZ800042</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1qXSqWEdzfGOu2OOmWW-D7PPt0InS4vc0/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">DIACURE 7690C Blue</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1waB20tSelBTm4UQfLu2RTyjJmSBELPPl/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">DIACURE 7408C Tan</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1srSOf-LfQn7rdmjwdrCrqFT5mqVSZVE3/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">DIACURE 356C Green</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1Da_tMihGGR743rIIzW6JgfO3_DDBZFYY/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Diacure 2190C Blue</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1Ym1Sj-IZcjYAAKF3LeHfCxmbXlMiIEdU/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">M5TU 109C Yellow</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/17wXWlVHJBbzwy6ZRkMZPjIpkkXALp6Zi/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">M5TU Aroma Tan</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1fihd-aNpNOfGWhir4UffmiOrRMSzkRXG/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">M5TU400451</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1k8cxIGUftm7mgNdnae3VI61Bna93r89z/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Sun Chemical SDS</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+
+    </div><!-- /cat-body -->
+  </div><!-- /cat-metal-inks -->
+
+  <!-- ══════════════════════════════════════════════
+       CATEGORY 2 – INKS & COATINGS – PLASTIC
+  ══════════════════════════════════════════════ -->
+  <div class="category" id="cat-plastic-inks">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-icon">🧴</span>
+      <span class="cat-title">Inks &amp; Coatings – Plastic</span>
+      <span class="cat-count" id="cnt-plastic-inks"></span>
+      <span class="cat-chevron">▼</span>
+    </div>
+    <div class="cat-body">
+      <div class="subcat" id="subcat-precision">
+        <div class="subcat-label">Precision Ink</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1H8QzNsGuZzlkXnVSkakP422FCZAMUYjm/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Precision Ink – Cyclops, New-Gen, Rapi-Cure, DryCure, Low-Zone</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CATEGORY 3 – PRINTING PROCESS CHEMICALS
+  ══════════════════════════════════════════════ -->
+  <div class="category" id="cat-process">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-icon">⚗️</span>
+      <span class="cat-title">Printing Process Chemicals</span>
+      <span class="cat-count" id="cnt-process"></span>
+      <span class="cat-chevron">▼</span>
+    </div>
+    <div class="cat-body">
+      <div class="subcat" id="subcat-fountain">
+        <div class="subcat-label">Fountain Solutions &amp; Plate Care</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1KeY0Bk8vBNF3sE5I9AcGQVZ8NzUcIjNa/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Blue Chip Fountain Solution</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1NJzMmuPCbUJUyAv3hk-6Jo93RENa6psd/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Fuji PressMax280 Fountain Solution</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1LNSW28liLoH3n_Yd8ipFGtUAB1QgrpLK/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">RBP Plate Cleaner &amp; Conditioner</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1exDnCcR5EkirwEnSW08boXXTfplUN2FN/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">S-1010 Isopropyl Alcohol</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+      <div class="subcat" id="subcat-videojet">
+        <div class="subcat-label">Coding &amp; Marking – Videojet</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1jYMhXseamrulrYpLMPNsLHoasqhlf5th/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Videojet V901-Q</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1vh2IJSDqifrbQO48ek-3uJ-Ya3N-z64w/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Videojet V7257-D</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1NR8-U15qzm6JKU91TbHprBcvZDJ11j5V/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Videojet V706-D</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1JQmFXJppucJjpuhBohE_q3IKMd-2lBPR/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Videojet V4257-D</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1iCWwws-JLko6cAhPzjvKq62ZxyyIYZwk/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Videojet V916-Q</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1fPIGatX7fuLtbv3u3H80Nq8JEIBdrfX0/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Videojet V411-D</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CATEGORY 4 – SOLVENTS
+  ══════════════════════════════════════════════ -->
+  <div class="category" id="cat-solvents">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-icon">🧪</span>
+      <span class="cat-title">Solvents</span>
+      <span class="cat-count" id="cnt-solvents"></span>
+      <span class="cat-chevron">▼</span>
+    </div>
+    <div class="cat-body">
+      <div class="subcat" id="subcat-county">
+        <div class="subcat-label">County Chemical</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1B0K-x730puDRK4TFSYAO7Z0c7hpISn2_/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Xylene</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1DuZgHStXBF3y3gW3jmB_4E8GIsMDLNEm/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Hi Sol 10</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1vk6jx8qqxZwC8Y-_NIEZJsN8eYnAKr2f/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">#294 Blend</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1wJpmN2Ab0tYH9kQ5uSFkNdEPQQuOcvzB/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Glycol Ether EB</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1M16veVmHa3qAOtgrRmPvH_-4SMODyQUS/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">ES 7030 Blend</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1Ajnd4th0Kka-ZcGi3GZccxB_I_3C4hJv/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">CTY PC Blend</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/19_b4AYCxiPKArp7F7jNG6V-px3ONuKgm/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">CS 100B</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1qF7FiRRut5XeYdgutjunvGgGP4Rz-gQ_/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">CS 2 R3</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CATEGORY 5 – LUBRICANTS & GREASES
+  ══════════════════════════════════════════════ -->
+  <div class="category" id="cat-lubes">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-icon">🔧</span>
+      <span class="cat-title">Lubricants &amp; Greases</span>
+      <span class="cat-count" id="cnt-lubes"></span>
+      <span class="cat-chevron">▼</span>
+    </div>
+    <div class="cat-body">
+      <div class="subcat" id="subcat-huskey">
+        <div class="subcat-label">Huskey</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1EpZgmUx7qpLGlI4cvRXzr-Q6O3rdMlyk/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">HTL-500 Grease (All Grades)</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1jHA44Bp8YCyeUZSmaUVHb9AhbIkLURPl/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">HTL-500 NSF Registration Letter</div><span class="doc-tag tag-reg">REG</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1nIAlzYJ3OrefWY4w3WdMwLoAWDmS5saX/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Enclosed Gear Oils (All Grades)</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+      <div class="subcat" id="subcat-lubriplate">
+        <div class="subcat-label">Lubriplate</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1AUSHCWTBAZGu686dYqWvbY6xXrkAEG4b/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">930 Series</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1TeYOIvVOiuqn3Ib00CCQWPvvpn-pGJec/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">MTR AGHS</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+      <div class="subcat" id="subcat-superlube">
+        <div class="subcat-label">Super Lube &amp; Other</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1SaP9gE1co2PCM3lERdYcvwUDyZWIlWOQ/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Super Lube Air Tool Pneumatic Lubricant</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/124SfGR8DMLX8gxivztVWzL4LfMTd0lOL/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Compound MSDS 2305120</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1bRF8Q57TQXghAnTAh37uC8bCgKcG0wOI/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Compound MSDS 2305096</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CATEGORY 6 – RAW MATERIALS
+  ══════════════════════════════════════════════ -->
+  <div class="category" id="cat-raw">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-icon">🏭</span>
+      <span class="cat-title">Raw Materials</span>
+      <span class="cat-count" id="cnt-raw"></span>
+      <span class="cat-chevron">▼</span>
+    </div>
+    <div class="cat-body">
+      <div class="subcat" id="subcat-raw-all">
+        <div class="subcat-label">Plastic Resins &amp; Additives</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1m-V57YoKXxCUiieVJE8w4NFbRAPiPxQ5/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Chevron MARLEX 9018 HDPE Resin</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/17PeXYcSHDs5_WPYxRak2EhZ_5125oV9x/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Chevron MARLEX 9012 HDPE Resin</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1glap6EDvSm3zz4AGttKQJmXaAX-jMUMG/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">LyondellBasell POLYBATCH WHITE LL 8425</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/14akn6jCBoEQ3n3svX5_EoWkZH2ceKHff/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">SDI LaFarga</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CATEGORY 7 – CLEANING & SANITATION
+  ══════════════════════════════════════════════ -->
+  <div class="category" id="cat-cleaning">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-icon">🧹</span>
+      <span class="cat-title">Cleaning &amp; Sanitation</span>
+      <span class="cat-count" id="cnt-cleaning"></span>
+      <span class="cat-chevron">▼</span>
+    </div>
+    <div class="cat-body">
+      <div class="subcat" id="subcat-cleaning-all">
+        <div class="subcat-label">Facility Cleaning Products</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/18kgggD4AFuVNdQt3fD_JY9jXlfUa0zsd/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">ARMAKLEEN 4-in-1 Cleaner</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/106r_v8oGkc_Iys7FSuADL02US8eoGZ5F/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Carpet Details Cleaner</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1gYzzYtQi_NQGu8vVzeCHLRbuXaaKNwp9/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Chemcraft Window Cleaner</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1SymfIVPY2OIKFiTWbZotjqC4ixfs0ihn/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Bleach</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1bf1J7BxMg0Oqmu0NpSD_jO3rzgt65GSz/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Purple Degreaser</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1qy9Mcce9EzPM4cBokdkMKp6u0Oo-xT5F/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Moisturizing Hand Soap</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1lfc_opLBdEjcMq9dqvhB5MoNCrOa_O9M/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Windex Glass Cleaner</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1USC-AtpNBdrXH-w5sfx_tNoduhU1s6xr/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Pumice Hand Cleaner</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1-dB5Ee7JfIqwqYz44vkpD9A3oDmhM-VG/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Eyesaline Solution</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1nINnee7QcEhaV2QFcUEAmQVUg82L1WwG/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Gojo Scrubbing Towels</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1YQLJWCSiaM_nAY8umsQST7JNFD0Jx8CZ/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Floor Science Cleaner</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1pZi73F03fgUkGPOfJc4BMOUStTjryHjv/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Air Freshener</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1C2tsxMQCGO6d-pLEFeVTGq75XeZa5Jqn/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Toilet Bowl Cleaner</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1Skc07T277raHMxk8SsUIW_9IgWn2ak1P/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Ground Sweeping Compound</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1IzweiuLnL8wBpIqjKJ_Jr_4riXllGFhd/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">Uline Ground Sweeping Compound – Oil Based</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1oN8wNpL-kcyMVhSZ8Ubl-fb4JmYOl_la/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">MICROFLEX Grey Nitrile Gloves</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CATEGORY 8 – PEST CONTROL
+  ══════════════════════════════════════════════ -->
+  <div class="category" id="cat-pest">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-icon">🐛</span>
+      <span class="cat-title">Pest Control</span>
+      <span class="cat-count" id="cnt-pest"></span>
+      <span class="cat-chevron">▼</span>
+    </div>
+    <div class="cat-body">
+      <div class="subcat" id="subcat-pest-all">
+        <div class="subcat-label">NyGuard IGR</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1qHwyogeGxPDqx978Tg2LpJ870ATPAwx9/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">NyGuard IGR Label</div><span class="doc-tag tag-label">LABEL</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1_5nnm4HIqm0Nzs3po3oa1ghGVYp_wpsT/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📄</span>
+            <div><div class="doc-name">NyGuard IGR</div><span class="doc-tag tag-sds">SDS</span></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       CATEGORY 9 – REFERENCE DOCUMENTS
+  ══════════════════════════════════════════════ -->
+  <div class="category" id="cat-ref">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-icon">📋</span>
+      <span class="cat-title">Reference Documents</span>
+      <span class="cat-count" id="cnt-ref"></span>
+      <span class="cat-chevron">▼</span>
+    </div>
+    <div class="cat-body">
+      <div class="subcat" id="subcat-ref-all">
+        <div class="subcat-label">Site &amp; Administrative Documents</div>
+        <div class="doc-grid">
+          <a class="doc-item" href="https://drive.google.com/file/d/1QaQ4jOlUJW-MdeUPXp4Yacoqs3ty5v9o/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📋</span>
+            <div><div class="doc-name">CSC Contingency Plan QRG</div><span class="doc-tag tag-ref">REF</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1n_HrJMj4CJdlvi1oN2BYXFYUcZMkh62t/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📋</span>
+            <div><div class="doc-name">CSC Site Map (June 2025)</div><span class="doc-tag tag-ref">REF</span></div>
+          </a>
+          <a class="doc-item" href="https://drive.google.com/file/d/1ibfrHiXWs6bl4_7497XJR2geZN1ezLER/view?usp=drivesdk" target="_blank">
+            <span class="doc-icon">📋</span>
+            <div><div class="doc-name">Chemical Classification</div><span class="doc-tag tag-ref">REF</span></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Container Supply Company &nbsp;·&nbsp; CSC Right to Know – SDS Library &nbsp;·&nbsp; SQF Edition 9 Compliant
+</footer>
+
+<script>
+  // ── Count badges ──
+  function updateCounts() {
+    const pairs = [
+      ['cat-metal-inks',   'cnt-metal-inks'],
+      ['cat-plastic-inks', 'cnt-plastic-inks'],
+      ['cat-process',      'cnt-process'],
+      ['cat-solvents',     'cnt-solvents'],
+      ['cat-lubes',        'cnt-lubes'],
+      ['cat-raw',          'cnt-raw'],
+      ['cat-cleaning',     'cnt-cleaning'],
+      ['cat-pest',         'cnt-pest'],
+      ['cat-ref',          'cnt-ref'],
+    ];
+    pairs.forEach(([catId, cntId]) => {
+      const cat = document.getElementById(catId);
+      const cnt = document.getElementById(cntId);
+      if (!cat || !cnt) return;
+      const visible = cat.querySelectorAll('.doc-item:not(.hidden)').length;
+      const total   = cat.querySelectorAll('.doc-item').length;
+      cnt.textContent = (visible === total) ? total : `${visible} / ${total}`;
+    });
+  }
+
+  // ── Collapse/expand ──
+  function toggleCat(header) {
+    header.closest('.category').classList.toggle('collapsed');
+  }
+
+  // ── Search ──
+  const searchInput = document.getElementById('search');
+  const noResults   = document.getElementById('no-results');
+  const resultCount = document.getElementById('result-count');
+
+  searchInput.addEventListener('input', doSearch);
+
+  function doSearch() {
+    const q = searchInput.value.trim().toLowerCase();
+    const items = document.querySelectorAll('.doc-item');
+    let shown = 0;
+
+    items.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      const match = !q || text.includes(q);
+      item.classList.toggle('hidden', !match);
+      if (match) shown++;
+    });
+
+    // Show/hide subcats and cats based on whether they have visible items
+    document.querySelectorAll('.subcat').forEach(sub => {
+      const hasVisible = sub.querySelectorAll('.doc-item:not(.hidden)').length > 0;
+      sub.classList.toggle('empty', !hasVisible);
+    });
+
+    document.querySelectorAll('.category').forEach(cat => {
+      const hasVisible = cat.querySelectorAll('.doc-item:not(.hidden)').length > 0;
+      cat.classList.toggle('empty', !hasVisible);
+      // Auto-expand on search
+      if (q && hasVisible) cat.classList.remove('collapsed');
+    });
+
+    const total = items.length;
+    resultCount.textContent = q ? `${shown} of ${total}` : '';
+    noResults.style.display = (shown === 0 && q) ? 'block' : 'none';
+
+    updateCounts();
+  }
+
+  function clearSearch() {
+    searchInput.value = '';
+    doSearch();
+    searchInput.focus();
+  }
+
+  // Init counts on load
+  updateCounts();
+</script>
+</body>
+</html>
