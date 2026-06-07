@@ -31,6 +31,7 @@
   --ink:        #1b2333;    /* body text                              */
   --muted:      #5a6479;    /* secondary text                         */
   --green:      #2f8f5b;    /* status / new                           */
+  --red:        #c0392b;    /* not-compliant / alert                  */
   --shadow:     0 1px 2px rgba(18,33,80,.05), 0 8px 22px rgba(18,33,80,.06);
   --radius:     11px;
 }
@@ -124,6 +125,28 @@ main{max-width:1240px;margin:0 auto;padding:30px 28px 70px}
   letter-spacing:.005em;color:var(--navy);
 }
 .section-head .rule{flex:1;height:1px;background:var(--line)}
+
+/* ── SQF live snapshot ── */
+.snap-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;
+  box-shadow:0 0 0 0 rgba(47,157,91,.5);animation:pulse 2s infinite}
+.live-dot.stale{background:var(--muted);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,157,91,.5)}70%{box-shadow:0 0 0 7px rgba(47,157,91,0)}100%{box-shadow:0 0 0 0 rgba(47,157,91,0)}}
+.snap-meta{font-size:.78rem;color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:10px}
+.snap-meta a{color:var(--royal);text-decoration:none;font-weight:600}
+.snap-meta a:hover{text-decoration:underline}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px 20px;border-top:3px solid var(--royal)}
+.kpi-label{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kpi-value{font-family:'Source Serif 4',Georgia,serif;font-weight:700;font-size:2.2rem;
+  line-height:1.1;color:var(--navy);margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.kpi-desc{font-size:.82rem;color:var(--muted);line-height:1.35}
+.kpi-skeleton .kpi-value{color:var(--line)}
+.snap-error{background:var(--sky);border:1px solid var(--sky-line);border-radius:var(--radius);
+  padding:16px 20px;font-size:.9rem;color:var(--muted)}
+.snap-error a{color:var(--royal);font-weight:600;text-decoration:none}
+.snap-error a:hover{text-decoration:underline}
 
 /* ── Quick links ── */
 .quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
@@ -237,15 +260,31 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
 
 <!-- MAIN CONTENT (rendered from CONFIG) -->
 <main>
-  <div class="section-head">
+  <div class="section-head snap-head">
     <span class="num">01</span>
+    <h2 class="serif">SQF Compliance Snapshot</h2>
+    <span class="live-dot" id="snap-dot" title="Live"></span>
+    <span class="snap-meta">
+      <span id="snap-updated">Loading…</span>
+      <a href="https://docs.google.com/spreadsheets/d/1ffBJfDU4q3Uet4jKrZOOlvFZWxLqEXXSjfbYmEpnIbI/edit" target="_blank" rel="noopener">Open dashboard ↗</a>
+    </span>
+  </div>
+  <div class="kpi-grid" id="kpi-mount">
+    <div class="kpi-card kpi-skeleton"><div class="kpi-label">Total Items</div><div class="kpi-value">—</div><div class="kpi-desc">Loading live data…</div></div>
+    <div class="kpi-card kpi-skeleton"><div class="kpi-label">% Compliant</div><div class="kpi-value">—</div><div class="kpi-desc">Loading live data…</div></div>
+    <div class="kpi-card kpi-skeleton"><div class="kpi-label">Compliant</div><div class="kpi-value">—</div><div class="kpi-desc">Loading live data…</div></div>
+    <div class="kpi-card kpi-skeleton"><div class="kpi-label">Not Compliant</div><div class="kpi-value">—</div><div class="kpi-desc">Loading live data…</div></div>
+  </div>
+
+  <div class="section-head">
+    <span class="num">02</span>
     <h2 class="serif">Quick Links</h2>
     <span class="rule"></span>
   </div>
   <div class="quick-grid" id="quick-mount"></div>
 
   <div class="section-head">
-    <span class="num">02</span>
+    <span class="num">03</span>
     <h2 class="serif">Resources &amp; Reference</h2>
     <span class="rule"></span>
   </div>
@@ -450,6 +489,65 @@ const CONFIG = {
     });
     noRes.classList.toggle('show', q && !anyVisible);
   });
+
+  /* ===============================================================
+     SQF COMPLIANCE SNAPSHOT — live values from the Google Sheet
+     ---------------------------------------------------------------
+     To point this at a different sheet/tab/range, edit these three:
+  =============================================================== */
+  const SQF = {
+    sheetId: '12fURIF8iQulV7j-DVQioxbU9YrYCG-Xopd3FH5oIHJE',
+    tab:     'Dashboard',
+    range:   'B5:I7',
+    refreshMinutes: 10        // how often to re-pull, in minutes
+  };
+  /* reads columns B, D, F, H (the four KPIs) across rows 5-7 */
+  const KPI_COLS = [0, 2, 4, 6];
+  const KPI_ACCENTS = ['var(--navy)', 'var(--royal)', 'var(--green)', 'var(--red)'];
+
+  async function loadSQF(){
+    const dot = document.getElementById('snap-dot');
+    const updated = document.getElementById('snap-updated');
+    const mount = document.getElementById('kpi-mount');
+    const url = `https://docs.google.com/spreadsheets/d/${SQF.sheetId}/gviz/tq`
+              + `?sheet=${encodeURIComponent(SQF.tab)}&range=${SQF.range}&headers=0&tqx=out:json`;
+    try{
+      const res = await fetch(url, {cache:'no-store'});
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      const json = JSON.parse(text.replace(/^[\s\S]*?setResponse\(/, '').replace(/\);?\s*$/, ''));
+      const rows = json.table && json.table.rows;
+      if(!rows || rows.length < 3) throw new Error('Unexpected data shape');
+
+      const cell = (r, i) => {
+        const c = rows[r] && rows[r].c && rows[r].c[i];
+        if(!c) return '';
+        return (c.f != null ? c.f : (c.v != null ? c.v : ''));
+      };
+
+      mount.innerHTML = KPI_COLS.map((i, n) =>
+        `<div class="kpi-card" style="border-top-color:${KPI_ACCENTS[n]}">
+           <div class="kpi-label">${esc(cell(0,i))}</div>
+           <div class="kpi-value" style="color:${KPI_ACCENTS[n]}">${esc(cell(1,i))}</div>
+           <div class="kpi-desc">${esc(cell(2,i))}</div>
+         </div>`).join('');
+
+      dot.classList.remove('stale');
+      updated.textContent = 'Live · updated ' +
+        new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    }catch(err){
+      dot.classList.add('stale');
+      updated.textContent = 'Live data unavailable';
+      mount.innerHTML =
+        `<div class="snap-error" style="grid-column:1/-1">
+           Couldn't load live figures from the SQF dashboard right now.
+           <a href="https://docs.google.com/spreadsheets/d/${SQF.sheetId}/edit" target="_blank" rel="noopener">Open the dashboard directly ↗</a>
+         </div>`;
+    }
+  }
+  loadSQF();
+  setInterval(loadSQF, SQF.refreshMinutes * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) loadSQF(); });
 })();
 </script>
 </body>
