@@ -37,11 +37,18 @@
       box-shadow: 0 2px 12px rgba(0,0,0,.25);
     }
     .logo-mark {
-      width: 48px; height: 48px;
-      background: var(--accent);
+      display: block;
+      background: #ffffff;
       border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 20px; color: #fff; flex-shrink: 0;
+      padding: 4px;
+      flex-shrink: 0;
+      line-height: 0;
+    }
+    .logo-mark img {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+      display: block;
     }
     header h1 { font-size: 1.4rem; font-weight: 700; line-height: 1.2; }
     header p  { font-size: .8rem; opacity: .75; margin-top: 2px; }
@@ -195,7 +202,9 @@
 <body>
 
 <header>
-  <div class="logo-mark">CSC</div>
+  <a href="https://riftwalker85.github.io/Container-Supply-Hub./" class="logo-mark" target="_blank" title="Container Supply Info Hub">
+    <img src="https://riftwalker85.github.io/Container-Supply-Hub./csc-mark.png" alt="Container Supply" />
+  </a>
   <div>
     <h1>Right to Know – SDS Library</h1>
     <p>Container Supply Company &nbsp;·&nbsp; Safety Data Sheet Repository</p>
