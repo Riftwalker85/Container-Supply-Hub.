@@ -319,6 +319,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
    • href = 'https://…'       -> an outside website (shows ↗ icon)
    • add  new:true            -> shows a small green "NEW" tag
    • add  ext:true            -> forces the external ↗ icon
+   • add  hrefMobile:'…'      -> (quick links only) opens a different URL on phones/tablets
 
    Lines starting with // are notes to yourself and are ignored.
    =================================================================== */
@@ -339,9 +340,10 @@ const CONFIG = {
 
   /* QUICK LINKS row — icon = any emoji/letter; sub = optional caption */
   quickLinks: [
-    { icon:'⚗',  label:'SDS Lookup',          sub:'Safety data sheets',href:'CSC_Right_to_Know.html' },
-    { icon:'🔧', label:'Maintenance Request',  sub:'Submit a request',  href:'https://sites.google.com/cscmfg.com/csc-tablet-dashboard/?pli=1&authuser=2', ext:true },
-    { icon:'📞', label:'Staff Directory',      sub:'Requires company Google login',href:'https://contacts.google.com/directory' }
+    { icon:'⚗',  label:'SDS Lookup',          sub:'Safety data sheets',href:'#', ext:true },
+    { icon:'🔧', label:'Maintenance Request',  sub:'Submit a request',  href:'https://script.google.com/a/macros/cscmfg.com/s/AKfycbw_JOKz75MbpOH5OoLkV6ewbRwgzhmCVlAJ9v2F4u8h2RYDjHfzvNCGEuSB6lVevbip/exec', hrefMobile:'https://sites.google.com/cscmfg.com/csc-tablet-dashboard/?pli=1&authuser=2', ext:true },
+    { icon:'📞', label:'Staff Directory',      sub:'Requires company Google login',href:'https://contacts.google.com/directory' },
+    { icon:'🎓', label:'Training Portal',      sub:'Courses & records',  href:'https://sites.google.com/cscmfg.com/csc/new-training-portal?authuser=0', ext:true }
   ],
 
   /* CATEGORY CARDS — each has a title, accent color, optional tag, and links */
@@ -434,11 +436,24 @@ const CONFIG = {
        </div>`;
   }
 
-  document.getElementById('quick-mount').innerHTML = CONFIG.quickLinks.map((q,i)=>
-    `<a class="quick reveal" style="animation-delay:${i*40}ms" href="${esc(q.href||'#')}" ${q.ext?'target="_blank" rel="noopener"':''}>
+  /* detect phones/tablets so links with an hrefMobile can open a different URL */
+  const IS_MOBILE = (function(){
+    const ua = navigator.userAgent || '';
+    if(/Mobi|Android|iPhone|iPod|IEMobile|BlackBerry/i.test(ua)) return true;
+    if(/iPad|Tablet/i.test(ua)) return true;
+    if(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return true;   // iPadOS
+    if(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && window.innerWidth <= 1024) return true;
+    return false;
+  })();
+
+  document.getElementById('quick-mount').innerHTML = CONFIG.quickLinks.map((q,i)=>{
+    const href = (IS_MOBILE && q.hrefMobile) ? q.hrefMobile : (q.href||'#');
+    const isExt = q.ext || /^https?:\/\//.test(href);
+    return `<a class="quick reveal" style="animation-delay:${i*40}ms" href="${esc(href)}" ${isExt?'target="_blank" rel="noopener"':''}>
        <span class="ico">${esc(q.icon||'•')}</span>
        <span class="label">${esc(q.label)}${q.sub?`<small>${esc(q.sub)}</small>`:''}</span>
-     </a>`).join('');
+     </a>`;
+  }).join('');
 
   document.getElementById('cat-mount').innerHTML = CONFIG.categories.map((cat,i)=>{
     const accent = esc(cat.accent||'#2540bf');
