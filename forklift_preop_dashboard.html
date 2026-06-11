@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forklift Inspection Dashboard</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f8; color: #1a202c; font-size: 13px; }
+
+.topbar { background: #1e2a4a; color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.topbar h1 { font-size: 15px; font-weight: 600; letter-spacing: .2px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; font-size: 11px; color: #8fa3c4; white-space: nowrap; }
+.topbar-right a { color: #7ab3ff; text-decoration: none; }
+.topbar-right a:hover { text-decoration: underline; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 14px 20px 10px; }
+.card { background: #fff; border-radius: 8px; padding: 14px 16px 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.card-label { font-size: 10px; color: #718096; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+.card-value { font-size: 28px; font-weight: 700; line-height: 1; color: #1a202c; }
+.card-value.green { color: #276749; }
+.card-value.red { color: #c53030; }
+.card-value.amber { color: #b7791f; }
+
+.filters { background: #fff; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 8px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.filters label { font-size: 11px; color: #718096; font-weight: 500; white-space: nowrap; }
+.filters select, .filters input[type=text], .filters input[type=date] {
+  border: 1px solid #cbd5e0; border-radius: 5px; padding: 5px 9px; font-size: 12px;
+  color: #2d3748; background: #fafafa; outline: none; height: 28px;
+}
+.filters select:focus, .filters input:focus { border-color: #667eea; background: #fff; box-shadow: 0 0 0 2px rgba(102,126,234,.15); }
+.filter-check { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #2d3748; cursor: pointer; user-select: none; }
+.filter-check input { cursor: pointer; }
+.btn-clear { margin-left: auto; padding: 5px 12px; background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 5px; cursor: pointer; font-size: 11px; color: #4a5568; }
+.btn-clear:hover { background: #e2e8f0; }
+
+.table-meta { padding: 6px 20px 2px; font-size: 11px; color: #a0aec0; }
+.table-wrap { padding: 6px 20px 24px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); font-size: 12px; }
+thead th { background: #f7fafc; padding: 8px 12px; text-align: left; font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 5; }
+thead th:hover { background: #edf2f7; }
+thead th.sort-asc::after { content: ' ↑'; opacity: .7; }
+thead th.sort-desc::after { content: ' ↓'; opacity: .7; }
+thead th.no-sort { cursor: default; }
+td { padding: 7px 12px; border-bottom: 1px solid #f0f4fa; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr.data-row:hover td { background: #f7f9ff; }
+tr.has-fail td { background: #fff5f5; }
+tr.has-fail:hover td { background: #fff0f0; }
+
+.fl-name { font-weight: 600; color: #2d3748; }
+.fl-serial { font-size: 10px; color: #a0aec0; display: block; margin-top: 1px; }
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .3px; }
+.badge-pass { background: #c6f6d5; color: #22543d; }
+.badge-fail { background: #fed7d7; color: #742a2a; }
+.checks-row { display: flex; gap: 3px; flex-wrap: wrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; cursor: default; position: relative; }
+.dot-pass { background: #48bb78; }
+.dot-fail { background: #fc8181; }
+.dot-na { background: #cbd5e0; }
+.dot-empty { background: #edf2f7; border: 1px dashed #cbd5e0; }
+.dot[title]:hover::after { content: attr(title); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #2d3748; color: #fff; font-size: 10px; padding: 3px 6px; border-radius: 3px; white-space: nowrap; z-index: 99; margin-bottom: 3px; pointer-events: none; }
+.fail-note { color: #c53030; font-size: 11px; font-style: italic; max-width: 180px; word-break: break-word; }
+.btn-expand { background: none; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer; padding: 2px 7px; font-size: 11px; color: #718096; }
+.btn-expand:hover { background: #f7fafc; }
+tr.detail-row { display: none; }
+tr.detail-row.open { display: table-row; }
+.detail-cell { background: #f7fafc !important; padding: 12px 20px 16px; }
+.checks-detail { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
+.check-entry { display: flex; align-items: flex-start; gap: 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 5px; padding: 6px 10px; }
+.check-entry .check-name { flex: 1; color: #718096; font-size: 11px; line-height: 1.3; }
+.check-entry .check-val { font-weight: 700; font-size: 11px; white-space: nowrap; }
+.check-entry.pass .check-val { color: #276749; }
+.check-entry.fail .check-val { color: #c53030; }
+.check-entry.na .check-val { color: #a0aec0; }
+.check-entry.empty .check-val { color: #cbd5e0; }
+.detail-meta { font-size: 11px; color: #718096; margin-bottom: 8px; }
+.detail-fail-note { margin-top: 8px; font-size: 11px; color: #c53030; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 5px; padding: 6px 10px; }
+
+#loading { text-align: center; padding: 60px 20px; color: #718096; }
+.spinner { width: 30px; height: 30px; border: 3px solid #e2e8f0; border-top-color: #667eea; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#err-box { padding: 20px 24px; color: #c53030; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 8px; margin: 16px 20px; }
+.no-results { text-align: center; padding: 40px; color: #a0aec0; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🏗️ CSC Forklift Pre-Operational Inspection Dashboard</h1>
+  <div class="topbar-right">
+    <span id="last-updated">Loading…</span>
+    <a href="https://docs.google.com/spreadsheets/d/1SlenhzwZXWIJR4Mp_ACKEoEvL6JJb-j8RnCQPGXV6Wo/edit" target="_blank">Open Source Sheet ↗</a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="card"><div class="card-label">Total Inspections</div><div class="card-value" id="s-total">—</div></div>
+  <div class="card"><div class="card-label">Active Forklifts</div><div class="card-value green" id="s-active">—</div></div>
+  <div class="card"><div class="card-label">Failures Recorded</div><div class="card-value red" id="s-fails">—</div></div>
+  <div class="card"><div class="card-label">Checked Today</div><div class="card-value amber" id="s-today">—</div></div>
+</div>
+
+<div class="filters">
+  <label>Forklift:</label>
+  <select id="f-forklift" style="min-width:180px"><option value="">All Forklifts</option></select>
+  <label>Operator:</label>
+  <input type="text" id="f-operator" placeholder="Search name…" style="width:140px">
+  <label>From:</label>
+  <input type="date" id="f-from">
+  <label>To:</label>
+  <input type="date" id="f-to">
+  <label class="filter-check"><input type="checkbox" id="f-fails"> Failures only</label>
+  <button class="btn-clear" id="btn-clear">Clear filters</button>
+</div>
+
+<div class="table-meta" id="result-meta"></div>
+
+<div id="loading"><div class="spinner"></div>Loading inspection records…</div>
+<div id="err-box" style="display:none"></div>
+
+<div class="table-wrap" style="display:none" id="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th data-col="forklift">Forklift</th>
+        <th data-col="date">Date</th>
+        <th data-col="time">Time</th>
+        <th data-col="operator">Operator</th>
+        <th data-col="hourMeter">Hour Meter</th>
+        <th data-col="status">Status</th>
+        <th class="no-sort">Checks (hover for detail)</th>
+        <th data-col="failedItems">Notes / Failed Items</th>
+        <th class="no-sort"></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<script>
+const FILE_ID = '1SlenhzwZXWIJR4Mp_ACKEoEvL6JJb-j8RnCQPGXV6Wo';
+
+const ALL_SHEETS = [
+  'Forklift #2 CF01-001807','Forklift #3 CF01-020973','Forklift #4 CF01-920045',
+  'Forklift #5 CPF02-021967','Forklift #8 CPH01-920902','Forklift #10 CF01-000694',
+  'Forklift #11 CF01-020976','Forklift #12 CPJ01-9N0534','Forklift #14 CF01-022375',
+  'Forklift #15 CPF02-024248','Forklift #16 71L341','Forklift #17 CP1F1-9N25197',
+  'Forklift #19 CUGL-02-9R0680','Forklift #20 CUGL02-9R0600','Forklift #21 L1123',
+  'Forklift #22 CP1F1-9N23823','Forklift #23 CP1F1-9N23858','Forklift #24 CP1F1-9N23808',
+  'Forklift #25 CP1F1-9N23807','Forklift #26 CP1F2-9W38636','Forklift #27 CP1F1-9N24269',
+  'Forklift #28 CP1F2-9W39303','Forklift #29 CP1F2-9W39314','Forklift #30 CP1F2-9W40003',
+  'Forklift #32 CP1F1-9N25201','Forklift #34 CP1F2-9W40706','Forklift #35 CP1F2-9W40707'
+];
+
+const SHEETS_WITH_DATA = [
+  'Forklift #2 CF01-001807','Forklift #4 CF01-920045','Forklift #10 CF01-000694',
+  'Forklift #12 CPJ01-9N0534','Forklift #17 CP1F1-9N25197','Forklift #23 CP1F1-9N23858',
+  'Forklift #24 CP1F1-9N23808','Forklift #25 CP1F1-9N23807','Forklift #26 CP1F2-9W38636',
+  'Forklift #27 CP1F1-9N24269','Forklift #28 CP1F2-9W39303','Forklift #30 CP1F2-9W40003',
+  'Forklift #34 CP1F2-9W40706','Forklift #35 CP1F2-9W40707'
+];
+
+const CHECK_KEYS = ['noLeaks','tankMounted','hoseConnections','forks','mast','tires','brakes','clutch','steering','lights','seatbelt','dataPlate','fireExtinguisher'];
+const CHECK_LABELS = {
+  noLeaks:'No Fluid Leaks', tankMounted:'Tank Mounted', hoseConnections:'Hose/Connections',
+  forks:'Forks', mast:'Carriage/Mast', tires:'Tires & Lugs', brakes:'Brakes',
+  clutch:'Clutch/Inching', steering:'Steering', lights:'Horn & Lights',
+  seatbelt:'Seatbelt/Guard', dataPlate:'Data Plate', fireExtinguisher:'Fire Extinguisher'
+};
+
+let allRecords = [];
+let filtered = [];
+let sortCol = 'date';
+let sortDir = 'desc';
+
+function parseCells(line) {
+  return line.split('|').slice(1, -1).map(c => c.trim());
+}
+
+function detectColumns(headerCells) {
+  const ci = {};
+  headerCells.forEach((h, i) => {
+    const l = h.toLowerCase();
+    if (i === 0) { ci.timestamp = i; return; }
+    if (i === 1) { ci.operator = i; return; }
+    if (i === 2) { ci.date = i; return; }
+    if (i === 3) { ci.hourMeter = i; return; }
+    if (l.includes('oil') || l.includes('coolant') || l.includes('propane')) ci.noLeaks = i;
+    else if (l.includes('tank') && (l.includes('mount') || l.includes('bracket'))) ci.tankMounted = i;
+    else if (l.includes('hose') || l.includes('valve') || l.includes('coupling')) ci.hoseConnections = i;
+    else if (l.includes('fork') && (l.includes('crack') || l.includes('level') || l.includes('lock pin'))) ci.forks = i;
+    else if (l.includes('carriage') || (l.includes('mast') && l.includes('chain'))) ci.mast = i;
+    else if (l.includes('tire') || l.includes('lug')) ci.tires = i;
+    else if (l.includes('brake')) ci.brakes = i;
+    else if (l.includes('inch') || l.includes('clutch')) ci.clutch = i;
+    else if (l.includes('steer')) ci.steering = i;
+    else if (l.includes('horn') || l.includes('headlight') || l.includes('backup alarm')) ci.lights = i;
+    else if (l.includes('seatbelt') || l.includes('overhead guard')) ci.seatbelt = i;
+    else if (l.includes('data plate') || l.includes('nameplate')) ci.dataPlate = i;
+    else if (l.includes('fire extinguisher')) ci.fireExtinguisher = i;
+    else if (l.includes('failed') || (l.includes('list') && l.includes('item'))) ci.failedItems = i;
+  });
+  return ci;
+}
+
+function parseTableBlock(lines) {
+  if (lines.length < 3) return [];
+  const headers = parseCells(lines[0]);
+  const ci = detectColumns(headers);
+  const records = [];
+  for (let i = 2; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.startsWith('|')) continue;
+    const cells = parseCells(line);
+    while (cells.length < headers.length) cells.push('');
+    const g = k => (ci[k] !== undefined ? cells[ci[k]] : '') || '';
+    const ts = g('timestamp');
+    let dateStr = g('date');
+    let timeStr = '';
+    const tm = ts.match(/(\d+\/\d+\/\d+)\s+(\d+:\d+)/);
+    if (tm) { dateStr = tm[1]; timeStr = tm[2]; }
+    let dateSortable = '';
+    const dm = dateStr.match(/(\d+)\/(\d+)\/(\d+)/);
+    if (dm) dateSortable = `${dm[3].padStart(4,'0')}-${dm[1].padStart(2,'0')}-${dm[2].padStart(2,'0')}`;
+    const checks = {};
+    CHECK_KEYS.forEach(k => { checks[k] = g(k); });
+    const hasFail = CHECK_KEYS.some(k => checks[k] === 'Fail');
+    records.push({ timestamp: ts, dateStr, dateSortable, timeStr, operator: g('operator').trim(), hourMeter: g('hourMeter'), checks, hasFail, failedItems: g('failedItems') });
+  }
+  return records;
+}
+
+function extractTableBlocks(text) {
+  const lines = text.split('\n');
+  const blocks = [];
+  let cur = [];
+  for (const line of lines) {
+    if (line.trim().startsWith('|')) { cur.push(line.trim()); }
+    else { if (cur.length >= 3) blocks.push([...cur]); cur = []; }
+  }
+  if (cur.length >= 3) blocks.push(cur);
+  return blocks;
+}
+
+async function loadData() {
+  try {
+    const r = await window.cowork.callMcpTool('mcp__d5b24901-0125-4c1d-ba03-075688a24f95__read_file_content', { fileId: FILE_ID });
+    let content;
+    try {
+      content = r.structuredContent?.fileContent;
+      if (!content) { const raw = Array.isArray(r.content) ? r.content[0]?.text : null; if (raw) content = JSON.parse(raw).fileContent; }
+    } catch(e) { content = null; }
+    if (!content) throw new Error('Could not read spreadsheet content.');
+    const blocks = extractTableBlocks(content);
+    allRecords = [];
+    blocks.forEach((block, idx) => {
+      const forkliftName = SHEETS_WITH_DATA[idx] || `Forklift #${idx + 1}`;
+      parseTableBlock(block).forEach(rec => allRecords.push({ ...rec, forklift: forkliftName }));
+    });
+    allRecords.sort((a, b) => {
+      if (b.dateSortable !== a.dateSortable) return b.dateSortable.localeCompare(a.dateSortable);
+      return b.timeStr.localeCompare(a.timeStr);
+    });
+    populateFilters();
+    applyFilters();
+    updateStats();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('table-wrap').style.display = 'block';
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch(err) {
+    document.getElementById('loading').style.display = 'none';
+    const eb = document.getElementById('err-box');
+    eb.style.display = 'block';
+    eb.textContent = 'Error loading data: ' + err.message;
+  }
+}
+
+function populateFilters() {
+  const sel = document.getElementById('f-forklift');
+  [...new Set(allRecords.map(r => r.forklift))].sort((a,b) => (parseInt(a.match(/#(\d+)/)?.[1]||0)) - (parseInt(b.match(/#(\d+)/)?.[1]||0))).forEach(f => {
+    const o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o);
+  });
+}
+
+function applyFilters() {
+  const fl = document.getElementById('f-forklift').value;
+  const op = document.getElementById('f-operator').value.toLowerCase().trim();
+  const from = document.getElementById('f-from').value;
+  const to = document.getElementById('f-to').value;
+  const failsOnly = document.getElementById('f-fails').checked;
+  filtered = allRecords.filter(r => {
+    if (fl && r.forklift !== fl) return false;
+    if (op && !r.operator.toLowerCase().includes(op)) return false;
+    if (from && r.dateSortable && r.dateSortable < from) return false;
+    if (to && r.dateSortable && r.dateSortable > to) return false;
+    if (failsOnly && !r.hasFail) return false;
+    return true;
+  });
+  filtered.sort((a, b) => {
+    let va = a[sortCol]||'', vb = b[sortCol]||'';
+    if (sortCol==='date'){va=a.dateSortable;vb=b.dateSortable;}
+    if (sortCol==='status'){va=a.hasFail?'1':'0';vb=b.hasFail?'1':'0';}
+    const cmp = va.localeCompare(vb,undefined,{numeric:true});
+    return sortDir==='asc'?cmp:-cmp;
+  });
+  renderTable();
+  document.getElementById('result-meta').textContent = filtered.length===allRecords.length
+    ? `Showing all ${allRecords.length} inspection records`
+    : `Showing ${filtered.length} of ${allRecords.length} records`;
+}
+
+function updateStats() {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('s-total').textContent = allRecords.length;
+  document.getElementById('s-active').textContent = new Set(allRecords.map(r=>r.forklift)).size;
+  document.getElementById('s-fails').textContent = allRecords.filter(r=>r.hasFail).length;
+  document.getElementById('s-today').textContent = allRecords.filter(r=>r.dateSortable===today).length;
+}
+
+function dotClass(val){return val==='Pass'?'dot-pass':val==='Fail'?'dot-fail':val==='Not Applicable'?'dot-na':'dot-empty';}
+function checkEntryClass(val){return val==='Pass'?'pass':val==='Fail'?'fail':val==='Not Applicable'?'na':'empty';}
+
+function renderTable() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  if (filtered.length===0){tbody.innerHTML='<tr><td colspan="9" class="no-results">No inspection records match your filters.</td></tr>';return;}
+  filtered.forEach((rec,idx)=>{
+    const rowId=`row-${idx}`;
+    const flParts=rec.forklift.match(/^(Forklift #\d+)\s+(.+)$/);
+    const flName=flParts?flParts[1]:rec.forklift;
+    const flSerial=flParts?flParts[2]:'';
+    const dots=CHECK_KEYS.map(k=>`<span class="dot ${dotClass(rec.checks[k])}" title="${CHECK_LABELS[k]}: ${rec.checks[k]||'—'}"></span>`).join('');
+    const opDisplay=rec.operator.replace(/\s+/g,' ').trim()||'—';
+    const tr=document.createElement('tr');
+    tr.className='data-row'+(rec.hasFail?' has-fail':'');
+    tr.innerHTML=`<td><span class="fl-name">${flName}</span><span class="fl-serial">${flSerial}</span></td><td>${rec.dateStr||'—'}</td><td>${rec.timeStr||'—'}</td><td>${opDisplay}</td><td>${rec.hourMeter||'—'}</td><td><span class="badge ${rec.hasFail?'badge-fail':'badge-pass'}">${rec.hasFail?'FAIL':'PASS'}</span></td><td><div class="checks-row">${dots}</div></td><td>${rec.failedItems?`<span class="fail-note">${rec.failedItems}</span>`:'<span style="color:#a0aec0">—</span>'}</td><td><button class="btn-expand" data-target="${rowId}">▾</button></td>`;
+    tbody.appendChild(tr);
+    const checksDetail=CHECK_KEYS.map(k=>`<div class="check-entry ${checkEntryClass(rec.checks[k])}"><span class="check-name">${CHECK_LABELS[k]}</span><span class="check-val">${rec.checks[k]||'—'}</span></div>`).join('');
+    const noteHtml=rec.failedItems?`<div class="detail-fail-note">⚠ Operator notes: ${rec.failedItems}</div>`:'';
+    const dr=document.createElement('tr');
+    dr.className='detail-row'; dr.id=rowId;
+    dr.innerHTML=`<td class="detail-cell" colspan="9"><div class="detail-meta">${flName} (${flSerial}) — ${rec.dateStr} ${rec.timeStr} — ${opDisplay} — Hour Meter: ${rec.hourMeter||'—'}</div><div class="checks-detail">${checksDetail}</div>${noteHtml}</td>`;
+    tbody.appendChild(dr);
+  });
+  tbody.querySelectorAll('.btn-expand').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const target=document.getElementById(btn.dataset.target);
+      if(!target)return;
+      const open=target.classList.toggle('open');
+      btn.textContent=open?'▴':'▾';
+    });
+  });
+}
+
+document.querySelectorAll('thead th[data-col]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const col=th.dataset.col;
+    if(sortCol===col){sortDir=sortDir==='asc'?'desc':'asc';}else{sortCol=col;sortDir=col==='date'?'desc':'asc';}
+    document.querySelectorAll('thead th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
+    th.classList.add(sortDir==='asc'?'sort-asc':'sort-desc');
+    applyFilters();
+  });
+});
+
+document.querySelector('thead th[data-col="date"]').classList.add('sort-desc');
+
+['f-forklift','f-operator','f-from','f-to','f-fails'].forEach(id=>{
+  document.getElementById(id).addEventListener(id==='f-operator'?'input':'change',applyFilters);
+});
+
+document.getElementById('btn-clear').addEventListener('click',()=>{
+  document.getElementById('f-forklift').value='';
+  document.getElementById('f-operator').value='';
+  document.getElementById('f-from').value='';
+  document.getElementById('f-to').value='';
+  document.getElementById('f-fails').checked=false;
+  applyFilters();
+});
+
+loadData();
+</script>
+</body>
+</html>
