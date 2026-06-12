@@ -1,385 +1,490 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Forklift Inspection Dashboard</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Forklift Pre-Op Inspection Board — CSC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root { color-scheme: light; }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f8; color: #1a202c; font-size: 13px; }
+  /* ===========================================================
+     CONFIG — edit these two values, nothing else required.
+     SHEET_ID  : the spreadsheet ID (already filled in for CSC).
+     SERIALS   : your forklift serial numbers = the tab names in
+                 the sheet. You can also manage these at runtime
+                 from the "Forklifts" control (no code editing).
+     =========================================================== */
+  :root{
+    --bg:#eef1f4;
+    --panel:#ffffff;
+    --ink:#15191e;
+    --muted:#646e78;
+    --line:#d8dee4;
+    --line-strong:#c2cad2;
+    --steel:#2f5d7c;
+    --steel-deep:#1f3d52;
+    --pass:#1f8a5b;
+    --pass-soft:#e3f3ea;
+    --fail:#c8412f;
+    --fail-soft:#fbe7e3;
+    --warn:#b9821f;
+    --warn-soft:#f7eed9;
+    --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 18px rgba(20,30,40,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Inter",system-ui,sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 64px}
 
-.topbar { background: #1e2a4a; color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.topbar h1 { font-size: 15px; font-weight: 600; letter-spacing: .2px; }
-.topbar-right { display: flex; align-items: center; gap: 12px; font-size: 11px; color: #8fa3c4; white-space: nowrap; }
-.topbar-right a { color: #7ab3ff; text-decoration: none; }
-.topbar-right a:hover { text-decoration: underline; }
+  /* Masthead */
+  header.mast{
+    display:flex;flex-wrap:wrap;align-items:flex-end;gap:18px;
+    border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:6px;
+  }
+  .mast .id{flex:1 1 320px;min-width:280px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--steel);font-weight:600;margin:0 0 6px;
+  }
+  h1{
+    font-family:"Space Grotesk",sans-serif;font-weight:700;
+    font-size:clamp(26px,4vw,40px);line-height:1.02;letter-spacing:-.02em;margin:0;
+  }
+  .mast .meta{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);
+    text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end;
+  }
+  .btn{
+    font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    background:var(--ink);color:#fff;border:none;border-radius:8px;padding:9px 14px;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong)}
+  .btn:active{transform:translateY(1px)}
 
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 14px 20px 10px; }
-.card { background: #fff; border-radius: 8px; padding: 14px 16px 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-.card-label { font-size: 10px; color: #718096; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
-.card-value { font-size: 28px; font-weight: 700; line-height: 1; color: #1a202c; }
-.card-value.green { color: #276749; }
-.card-value.red { color: #c53030; }
-.card-value.amber { color: #b7791f; }
+  /* Fleet summary strip */
+  .strip{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:22px 0 28px;
+    box-shadow:var(--shadow);
+  }
+  .stat{background:var(--panel);padding:18px 18px 16px}
+  .stat .k{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 8px;
+  }
+  .stat .v{font-family:"Space Grotesk",sans-serif;font-size:30px;font-weight:600;line-height:1}
+  .stat .v small{font-size:14px;color:var(--muted);font-weight:500}
+  .stat.alert .v{color:var(--fail)}
+  @media(max-width:720px){.strip{grid-template-columns:repeat(2,1fr)}}
 
-.filters { background: #fff; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 8px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.filters label { font-size: 11px; color: #718096; font-weight: 500; white-space: nowrap; }
-.filters select, .filters input[type=text], .filters input[type=date] {
-  border: 1px solid #cbd5e0; border-radius: 5px; padding: 5px 9px; font-size: 12px;
-  color: #2d3748; background: #fafafa; outline: none; height: 28px;
-}
-.filters select:focus, .filters input:focus { border-color: #667eea; background: #fff; box-shadow: 0 0 0 2px rgba(102,126,234,.15); }
-.filter-check { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #2d3748; cursor: pointer; user-select: none; }
-.filter-check input { cursor: pointer; }
-.btn-clear { margin-left: auto; padding: 5px 12px; background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 5px; cursor: pointer; font-size: 11px; color: #4a5568; }
-.btn-clear:hover { background: #e2e8f0; }
+  /* Section headings */
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 14px}
+  .sec-head h2{
+    font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:18px;margin:0;letter-spacing:-.01em;
+  }
+  .sec-head .hint{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
 
-.table-meta { padding: 6px 20px 2px; font-size: 11px; color: #a0aec0; }
-.table-wrap { padding: 6px 20px 24px; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); font-size: 12px; }
-thead th { background: #f7fafc; padding: 8px 12px; text-align: left; font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 5; }
-thead th:hover { background: #edf2f7; }
-thead th.sort-asc::after { content: ' ↑'; opacity: .7; }
-thead th.sort-desc::after { content: ' ↓'; opacity: .7; }
-thead th.no-sort { cursor: default; }
-td { padding: 7px 12px; border-bottom: 1px solid #f0f4fa; vertical-align: middle; }
-tr:last-child td { border-bottom: none; }
-tr.data-row:hover td { background: #f7f9ff; }
-tr.has-fail td { background: #fff5f5; }
-tr.has-fail:hover td { background: #fff0f0; }
+  /* Fleet grid */
+  .fleet{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px;margin-bottom:34px}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 15px 13px;
+    box-shadow:var(--shadow);display:flex;flex-direction:column;gap:11px;
+  }
+  .card .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .serial{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:16px;letter-spacing:.01em}
+  .serial small{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:400;margin-bottom:2px}
+  .pill{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;letter-spacing:.04em;
+    padding:3px 8px;border-radius:999px;white-space:nowrap;
+  }
+  .pill.ok{background:var(--pass-soft);color:var(--pass)}
+  .pill.bad{background:var(--fail-soft);color:var(--fail)}
+  .pill.none{background:#eef1f4;color:var(--muted)}
+  .card .lastrow{font-size:12.5px;color:var(--muted)}
+  .card .lastrow b{color:var(--ink);font-weight:600}
+  .pips{display:flex;flex-wrap:wrap;gap:4px}
+  .pip{width:13px;height:13px;border-radius:3px;background:var(--pass);position:relative}
+  .pip.f{background:var(--fail)}
+  .pip.b{background:#dfe5ea;border:1px solid var(--line-strong)}
+  .card .foot{
+    display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;
+    font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:9px;
+  }
+  .card .foot b{color:var(--ink)}
 
-.fl-name { font-weight: 600; color: #2d3748; }
-.fl-serial { font-size: 10px; color: #a0aec0; display: block; margin-top: 1px; }
-.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .3px; }
-.badge-pass { background: #c6f6d5; color: #22543d; }
-.badge-fail { background: #fed7d7; color: #742a2a; }
-.checks-row { display: flex; gap: 3px; flex-wrap: wrap; }
-.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; cursor: default; position: relative; }
-.dot-pass { background: #48bb78; }
-.dot-fail { background: #fc8181; }
-.dot-na { background: #cbd5e0; }
-.dot-empty { background: #edf2f7; border: 1px dashed #cbd5e0; }
-.dot[title]:hover::after { content: attr(title); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #2d3748; color: #fff; font-size: 10px; padding: 3px 6px; border-radius: 3px; white-space: nowrap; z-index: 99; margin-bottom: 3px; pointer-events: none; }
-.fail-note { color: #c53030; font-size: 11px; font-style: italic; max-width: 180px; word-break: break-word; }
-.btn-expand { background: none; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer; padding: 2px 7px; font-size: 11px; color: #718096; }
-.btn-expand:hover { background: #f7fafc; }
-tr.detail-row { display: none; }
-tr.detail-row.open { display: table-row; }
-.detail-cell { background: #f7fafc !important; padding: 12px 20px 16px; }
-.checks-detail { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
-.check-entry { display: flex; align-items: flex-start; gap: 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 5px; padding: 6px 10px; }
-.check-entry .check-name { flex: 1; color: #718096; font-size: 11px; line-height: 1.3; }
-.check-entry .check-val { font-weight: 700; font-size: 11px; white-space: nowrap; }
-.check-entry.pass .check-val { color: #276749; }
-.check-entry.fail .check-val { color: #c53030; }
-.check-entry.na .check-val { color: #a0aec0; }
-.check-entry.empty .check-val { color: #cbd5e0; }
-.detail-meta { font-size: 11px; color: #718096; margin-bottom: 8px; }
-.detail-fail-note { margin-top: 8px; font-size: 11px; color: #c53030; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 5px; padding: 6px 10px; }
+  /* Records table */
+  .tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+  .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:13px 14px;border-bottom:1px solid var(--line)}
+  .filters label{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  select,input[type=text]{
+    font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line-strong);
+    border-radius:8px;background:#fff;color:var(--ink);
+  }
+  .scroll{overflow:auto;max-height:560px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  thead th{
+    position:sticky;top:0;background:var(--steel-deep);color:#fff;text-align:left;
+    font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:10.5px;letter-spacing:.04em;
+    text-transform:uppercase;padding:9px 10px;white-space:nowrap;z-index:2;
+  }
+  thead th .full{display:block;font-size:9px;color:#b7c7d4;font-weight:400;text-transform:none;letter-spacing:0;max-width:120px;white-space:normal;line-height:1.25;margin-top:2px}
+  tbody td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}
+  tbody tr:hover{background:#f7f9fb}
+  td.serial-c{font-family:"IBM Plex Mono",monospace;font-weight:600}
+  td.mono{font-family:"IBM Plex Mono",monospace;color:var(--muted)}
+  .res{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;display:inline-block}
+  .res.ok{background:var(--pass-soft);color:var(--pass)}
+  .res.bad{background:var(--fail-soft);color:var(--fail)}
+  .res.blank{color:#aeb6be}
+  tr.hasfail td{background:var(--fail-soft)!important}
+  .failtext{color:var(--fail);font-weight:600;white-space:normal;max-width:240px}
 
-#loading { text-align: center; padding: 60px 20px; color: #718096; }
-.spinner { width: 30px; height: 30px; border: 3px solid #e2e8f0; border-top-color: #667eea; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-#err-box { padding: 20px 24px; color: #c53030; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 8px; margin: 16px 20px; }
-.no-results { text-align: center; padding: 40px; color: #a0aec0; font-size: 13px; }
+  /* States */
+  .state{
+    background:var(--panel);border:1px dashed var(--line-strong);border-radius:12px;
+    padding:34px 26px;text-align:center;color:var(--muted);
+  }
+  .state h3{font-family:"Space Grotesk",sans-serif;color:var(--ink);margin:0 0 8px;font-size:18px}
+  .state code{font-family:"IBM Plex Mono",monospace;background:#eef1f4;padding:2px 6px;border-radius:5px;color:var(--ink)}
+  .state ol{text-align:left;max-width:560px;margin:14px auto 0;line-height:1.7}
+  .spinner{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--steel);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+
+  footer.note{margin-top:30px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line);padding-top:14px}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:middle;margin-right:5px}
+
+  /* Forklift manager dialog */
+  dialog{border:1px solid var(--line-strong);border-radius:14px;padding:0;max-width:460px;width:92%;box-shadow:0 24px 60px rgba(15,30,45,.28)}
+  dialog::backdrop{background:rgba(20,30,40,.4)}
+  .dlg-h{padding:16px 18px;border-bottom:1px solid var(--line);font-family:"Space Grotesk",sans-serif;font-weight:600}
+  .dlg-b{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+  .dlg-b p{margin:0;font-size:13px;color:var(--muted)}
+  textarea{font:inherit;font-family:"IBM Plex Mono",monospace;font-size:13px;min-height:120px;padding:10px;border:1px solid var(--line-strong);border-radius:8px;resize:vertical}
+  .dlg-f{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<div class="topbar">
-  <h1>🏗️ CSC Forklift Pre-Operational Inspection Dashboard</h1>
-  <div class="topbar-right">
-    <span id="last-updated">Loading…</span>
-    <a href="https://docs.google.com/spreadsheets/d/1SlenhzwZXWIJR4Mp_ACKEoEvL6JJb-j8RnCQPGXV6Wo/edit" target="_blank">Open Source Sheet ↗</a>
+  <header class="mast">
+    <div class="id">
+      <p class="eyebrow">Container Supply Co. · Powered Industrial Trucks</p>
+      <h1>Forklift Pre-Op<br>Inspection Board</h1>
+    </div>
+    <div class="meta">
+      <span id="refreshed">—</span>
+      <span style="display:flex;gap:8px">
+        <button class="btn ghost" id="manageBtn" type="button">Forklifts</button>
+        <button class="btn" id="refreshBtn" type="button">Refresh</button>
+      </span>
+    </div>
+  </header>
+
+  <section class="strip" id="strip" aria-label="Fleet summary">
+    <div class="stat"><p class="k">Forklifts tracked</p><div class="v" id="s-fleet">—</div></div>
+    <div class="stat"><p class="k">Inspections logged</p><div class="v" id="s-total">—</div></div>
+    <div class="stat"><p class="k">Logged last 7 days</p><div class="v" id="s-week">—</div></div>
+    <div class="stat alert"><p class="k">Inspections with a fail</p><div class="v" id="s-fails">—</div></div>
+  </section>
+
+  <div class="sec-head">
+    <h2>Fleet status</h2>
+    <span class="hint" id="fleet-hint">most recent inspection per unit</span>
   </div>
+  <div id="fleet" class="fleet"></div>
+
+  <div class="sec-head">
+    <h2>Inspection records</h2>
+    <span class="hint" id="rec-hint"></span>
+  </div>
+  <div class="tablewrap" id="tablewrap" style="display:none">
+    <div class="filters">
+      <label for="f-serial">Forklift</label>
+      <select id="f-serial"><option value="">All</option></select>
+      <label for="f-result">Result</label>
+      <select id="f-result">
+        <option value="">All</option>
+        <option value="fail">Has a fail</option>
+        <option value="pass">All pass</option>
+      </select>
+      <label for="f-search">Find</label>
+      <input type="text" id="f-search" placeholder="date, serial…" style="flex:1;min-width:140px">
+    </div>
+    <div class="scroll"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+  </div>
+
+  <div id="state" class="state">
+    <div class="spinner"></div>
+    <h3>Connecting to your sheet…</h3>
+    <p>Reading each forklift tab. This runs live, so the board reflects the sheet every time it loads.</p>
+  </div>
+
+  <footer class="note" id="footer">
+    <span class="dot" style="background:var(--pass)"></span>Pass
+    <span class="dot" style="background:var(--fail);margin-left:14px"></span>Fail
+    <span class="dot" style="background:#dfe5ea;border:1px solid var(--line-strong);margin-left:14px"></span>Not recorded<br>
+    Operator names are intentionally excluded from this board. Data is read live from the responses sheet; nothing is stored by this page.
+  </footer>
 </div>
 
-<div class="stats">
-  <div class="card"><div class="card-label">Total Inspections</div><div class="card-value" id="s-total">—</div></div>
-  <div class="card"><div class="card-label">Active Forklifts</div><div class="card-value green" id="s-active">—</div></div>
-  <div class="card"><div class="card-label">Failures Recorded</div><div class="card-value red" id="s-fails">—</div></div>
-  <div class="card"><div class="card-label">Checked Today</div><div class="card-value amber" id="s-today">—</div></div>
-</div>
+<dialog id="dlg">
+  <div class="dlg-h">Forklifts on this board</div>
+  <div class="dlg-b">
+    <p>List the forklift serial numbers — one per line or comma-separated. These must match the tab names in your sheet exactly. The list is saved in this page's link, so you can bookmark or share it.</p>
+    <textarea id="serialInput" spellcheck="false"></textarea>
+  </div>
+  <div class="dlg-f">
+    <button class="btn ghost" id="dlgCancel" type="button">Cancel</button>
+    <button class="btn" id="dlgSave" type="button">Save & reload</button>
+  </div>
+</dialog>
 
-<div class="filters">
-  <label>Forklift:</label>
-  <select id="f-forklift" style="min-width:180px"><option value="">All Forklifts</option></select>
-  <label>Operator:</label>
-  <input type="text" id="f-operator" placeholder="Search name…" style="width:140px">
-  <label>From:</label>
-  <input type="date" id="f-from">
-  <label>To:</label>
-  <input type="date" id="f-to">
-  <label class="filter-check"><input type="checkbox" id="f-fails"> Failures only</label>
-  <button class="btn-clear" id="btn-clear">Clear filters</button>
-</div>
-
-<div class="table-meta" id="result-meta"></div>
-
-<div id="loading"><div class="spinner"></div>Loading inspection records…</div>
-<div id="err-box" style="display:none"></div>
-
-<div class="table-wrap" style="display:none" id="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th data-col="forklift">Forklift</th>
-        <th data-col="date">Date</th>
-        <th data-col="time">Time</th>
-        <th data-col="operator">Operator</th>
-        <th data-col="hourMeter">Hour Meter</th>
-        <th data-col="status">Status</th>
-        <th class="no-sort">Checks (hover for detail)</th>
-        <th data-col="failedItems">Notes / Failed Items</th>
-        <th class="no-sort"></th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-  </table>
-</div>
-
+<script src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
-const FILE_ID = '1SlenhzwZXWIJR4Mp_ACKEoEvL6JJb-j8RnCQPGXV6Wo';
-
-const ALL_SHEETS = [
-  'Forklift #2 CF01-001807','Forklift #3 CF01-020973','Forklift #4 CF01-920045',
-  'Forklift #5 CPF02-021967','Forklift #8 CPH01-920902','Forklift #10 CF01-000694',
-  'Forklift #11 CF01-020976','Forklift #12 CPJ01-9N0534','Forklift #14 CF01-022375',
-  'Forklift #15 CPF02-024248','Forklift #16 71L341','Forklift #17 CP1F1-9N25197',
-  'Forklift #19 CUGL-02-9R0680','Forklift #20 CUGL02-9R0600','Forklift #21 L1123',
-  'Forklift #22 CP1F1-9N23823','Forklift #23 CP1F1-9N23858','Forklift #24 CP1F1-9N23808',
-  'Forklift #25 CP1F1-9N23807','Forklift #26 CP1F2-9W38636','Forklift #27 CP1F1-9N24269',
-  'Forklift #28 CP1F2-9W39303','Forklift #29 CP1F2-9W39314','Forklift #30 CP1F2-9W40003',
-  'Forklift #32 CP1F1-9N25201','Forklift #34 CP1F2-9W40706','Forklift #35 CP1F2-9W40707'
-];
-
-const SHEETS_WITH_DATA = [
-  'Forklift #2 CF01-001807','Forklift #4 CF01-920045','Forklift #10 CF01-000694',
-  'Forklift #12 CPJ01-9N0534','Forklift #17 CP1F1-9N25197','Forklift #23 CP1F1-9N23858',
-  'Forklift #24 CP1F1-9N23808','Forklift #25 CP1F1-9N23807','Forklift #26 CP1F2-9W38636',
-  'Forklift #27 CP1F1-9N24269','Forklift #28 CP1F2-9W39303','Forklift #30 CP1F2-9W40003',
-  'Forklift #34 CP1F2-9W40706','Forklift #35 CP1F2-9W40707'
-];
-
-const CHECK_KEYS = ['noLeaks','tankMounted','hoseConnections','forks','mast','tires','brakes','clutch','steering','lights','seatbelt','dataPlate','fireExtinguisher'];
-const CHECK_LABELS = {
-  noLeaks:'No Fluid Leaks', tankMounted:'Tank Mounted', hoseConnections:'Hose/Connections',
-  forks:'Forks', mast:'Carriage/Mast', tires:'Tires & Lugs', brakes:'Brakes',
-  clutch:'Clutch/Inching', steering:'Steering', lights:'Horn & Lights',
-  seatbelt:'Seatbelt/Guard', dataPlate:'Data Plate', fireExtinguisher:'Fire Extinguisher'
+/* ====================== CONFIG ====================== */
+const CONFIG = {
+  SHEET_ID: "1SlenhzwZXWIJR4Mp_ACKEoEvL6JJb-j8RnCQPGXV6Wo",
+  // Default forklift serials = sheet tab names. Edit here, or use the
+  // "Forklifts" button. (The first sheet of this workbook holds test
+  // entries T1–T5; list your real serial-number tabs below.)
+  SERIALS: []
 };
 
-let allRecords = [];
-let filtered = [];
-let sortCol = 'date';
-let sortDir = 'desc';
+/* Column model of the pre-op form (operator name is column 1 and is
+   deliberately never read). Index = column position in each tab. */
+const COLS = {
+  timestamp:0, name:1 /* excluded */, date:2, hours:3,
+  inspection:[4,5,6,7,8,9,10,11,12,13,14,15,17],
+  failedText:16, fireExt:17
+};
+const SHORT = {
+  4:"Leaks / propane", 5:"Tank mount", 6:"Tank hose & valve", 7:"Forks",
+  8:"Carriage / mast / chains", 9:"Tires & lugs", 10:"Brakes",
+  11:"Inching / clutch", 12:"Steering", 13:"Lights & horn",
+  14:"Seat & guard", 15:"Data plate", 17:"Fire extinguisher"
+};
 
-function parseCells(line) {
-  return line.split('|').slice(1, -1).map(c => c.trim());
+/* ================= Serial-list handling ================= */
+function serialsFromHash(){
+  const h = decodeURIComponent(location.hash.replace(/^#/,""));
+  const m = h.match(/(?:^|&)units=([^&]*)/);
+  if(!m) return null;
+  const list = m[1].split(/[,\n;]+/).map(s=>s.trim()).filter(Boolean);
+  return list.length ? list : null;
 }
+function activeSerials(){ return serialsFromHash() || CONFIG.SERIALS.slice(); }
 
-function detectColumns(headerCells) {
-  const ci = {};
-  headerCells.forEach((h, i) => {
-    const l = h.toLowerCase();
-    if (i === 0) { ci.timestamp = i; return; }
-    if (i === 1) { ci.operator = i; return; }
-    if (i === 2) { ci.date = i; return; }
-    if (i === 3) { ci.hourMeter = i; return; }
-    if (l.includes('oil') || l.includes('coolant') || l.includes('propane')) ci.noLeaks = i;
-    else if (l.includes('tank') && (l.includes('mount') || l.includes('bracket'))) ci.tankMounted = i;
-    else if (l.includes('hose') || l.includes('valve') || l.includes('coupling')) ci.hoseConnections = i;
-    else if (l.includes('fork') && (l.includes('crack') || l.includes('level') || l.includes('lock pin'))) ci.forks = i;
-    else if (l.includes('carriage') || (l.includes('mast') && l.includes('chain'))) ci.mast = i;
-    else if (l.includes('tire') || l.includes('lug')) ci.tires = i;
-    else if (l.includes('brake')) ci.brakes = i;
-    else if (l.includes('inch') || l.includes('clutch')) ci.clutch = i;
-    else if (l.includes('steer')) ci.steering = i;
-    else if (l.includes('horn') || l.includes('headlight') || l.includes('backup alarm')) ci.lights = i;
-    else if (l.includes('seatbelt') || l.includes('overhead guard')) ci.seatbelt = i;
-    else if (l.includes('data plate') || l.includes('nameplate')) ci.dataPlate = i;
-    else if (l.includes('fire extinguisher')) ci.fireExtinguisher = i;
-    else if (l.includes('failed') || (l.includes('list') && l.includes('item'))) ci.failedItems = i;
-  });
-  return ci;
-}
-
-function parseTableBlock(lines) {
-  if (lines.length < 3) return [];
-  const headers = parseCells(lines[0]);
-  const ci = detectColumns(headers);
-  const records = [];
-  for (let i = 2; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.startsWith('|')) continue;
-    const cells = parseCells(line);
-    while (cells.length < headers.length) cells.push('');
-    const g = k => (ci[k] !== undefined ? cells[ci[k]] : '') || '';
-    const ts = g('timestamp');
-    let dateStr = g('date');
-    let timeStr = '';
-    const tm = ts.match(/(\d+\/\d+\/\d+)\s+(\d+:\d+)/);
-    if (tm) { dateStr = tm[1]; timeStr = tm[2]; }
-    let dateSortable = '';
-    const dm = dateStr.match(/(\d+)\/(\d+)\/(\d+)/);
-    if (dm) dateSortable = `${dm[3].padStart(4,'0')}-${dm[1].padStart(2,'0')}-${dm[2].padStart(2,'0')}`;
-    const checks = {};
-    CHECK_KEYS.forEach(k => { checks[k] = g(k); });
-    const hasFail = CHECK_KEYS.some(k => checks[k] === 'Fail');
-    records.push({ timestamp: ts, dateStr, dateSortable, timeStr, operator: g('operator').trim(), hourMeter: g('hourMeter'), checks, hasFail, failedItems: g('failedItems') });
-  }
-  return records;
-}
-
-function extractTableBlocks(text) {
-  const lines = text.split('\n');
-  const blocks = [];
-  let cur = [];
-  for (const line of lines) {
-    if (line.trim().startsWith('|')) { cur.push(line.trim()); }
-    else { if (cur.length >= 3) blocks.push([...cur]); cur = []; }
-  }
-  if (cur.length >= 3) blocks.push(cur);
-  return blocks;
-}
-
-async function loadData() {
-  try {
-    const r = await window.cowork.callMcpTool('mcp__d5b24901-0125-4c1d-ba03-075688a24f95__read_file_content', { fileId: FILE_ID });
-    let content;
-    try {
-      content = r.structuredContent?.fileContent;
-      if (!content) { const raw = Array.isArray(r.content) ? r.content[0]?.text : null; if (raw) content = JSON.parse(raw).fileContent; }
-    } catch(e) { content = null; }
-    if (!content) throw new Error('Could not read spreadsheet content.');
-    const blocks = extractTableBlocks(content);
-    allRecords = [];
-    blocks.forEach((block, idx) => {
-      const forkliftName = SHEETS_WITH_DATA[idx] || `Forklift #${idx + 1}`;
-      parseTableBlock(block).forEach(rec => allRecords.push({ ...rec, forklift: forkliftName }));
-    });
-    allRecords.sort((a, b) => {
-      if (b.dateSortable !== a.dateSortable) return b.dateSortable.localeCompare(a.dateSortable);
-      return b.timeStr.localeCompare(a.timeStr);
-    });
-    populateFilters();
-    applyFilters();
-    updateStats();
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('table-wrap').style.display = 'block';
-    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } catch(err) {
-    document.getElementById('loading').style.display = 'none';
-    const eb = document.getElementById('err-box');
-    eb.style.display = 'block';
-    eb.textContent = 'Error loading data: ' + err.message;
-  }
-}
-
-function populateFilters() {
-  const sel = document.getElementById('f-forklift');
-  [...new Set(allRecords.map(r => r.forklift))].sort((a,b) => (parseInt(a.match(/#(\d+)/)?.[1]||0)) - (parseInt(b.match(/#(\d+)/)?.[1]||0))).forEach(f => {
-    const o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o);
-  });
-}
-
-function applyFilters() {
-  const fl = document.getElementById('f-forklift').value;
-  const op = document.getElementById('f-operator').value.toLowerCase().trim();
-  const from = document.getElementById('f-from').value;
-  const to = document.getElementById('f-to').value;
-  const failsOnly = document.getElementById('f-fails').checked;
-  filtered = allRecords.filter(r => {
-    if (fl && r.forklift !== fl) return false;
-    if (op && !r.operator.toLowerCase().includes(op)) return false;
-    if (from && r.dateSortable && r.dateSortable < from) return false;
-    if (to && r.dateSortable && r.dateSortable > to) return false;
-    if (failsOnly && !r.hasFail) return false;
-    return true;
-  });
-  filtered.sort((a, b) => {
-    let va = a[sortCol]||'', vb = b[sortCol]||'';
-    if (sortCol==='date'){va=a.dateSortable;vb=b.dateSortable;}
-    if (sortCol==='status'){va=a.hasFail?'1':'0';vb=b.hasFail?'1':'0';}
-    const cmp = va.localeCompare(vb,undefined,{numeric:true});
-    return sortDir==='asc'?cmp:-cmp;
-  });
-  renderTable();
-  document.getElementById('result-meta').textContent = filtered.length===allRecords.length
-    ? `Showing all ${allRecords.length} inspection records`
-    : `Showing ${filtered.length} of ${allRecords.length} records`;
-}
-
-function updateStats() {
-  const today = new Date().toISOString().slice(0,10);
-  document.getElementById('s-total').textContent = allRecords.length;
-  document.getElementById('s-active').textContent = new Set(allRecords.map(r=>r.forklift)).size;
-  document.getElementById('s-fails').textContent = allRecords.filter(r=>r.hasFail).length;
-  document.getElementById('s-today').textContent = allRecords.filter(r=>r.dateSortable===today).length;
-}
-
-function dotClass(val){return val==='Pass'?'dot-pass':val==='Fail'?'dot-fail':val==='Not Applicable'?'dot-na':'dot-empty';}
-function checkEntryClass(val){return val==='Pass'?'pass':val==='Fail'?'fail':val==='Not Applicable'?'na':'empty';}
-
-function renderTable() {
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
-  if (filtered.length===0){tbody.innerHTML='<tr><td colspan="9" class="no-results">No inspection records match your filters.</td></tr>';return;}
-  filtered.forEach((rec,idx)=>{
-    const rowId=`row-${idx}`;
-    const flParts=rec.forklift.match(/^(Forklift #\d+)\s+(.+)$/);
-    const flName=flParts?flParts[1]:rec.forklift;
-    const flSerial=flParts?flParts[2]:'';
-    const dots=CHECK_KEYS.map(k=>`<span class="dot ${dotClass(rec.checks[k])}" title="${CHECK_LABELS[k]}: ${rec.checks[k]||'—'}"></span>`).join('');
-    const opDisplay=rec.operator.replace(/\s+/g,' ').trim()||'—';
-    const tr=document.createElement('tr');
-    tr.className='data-row'+(rec.hasFail?' has-fail':'');
-    tr.innerHTML=`<td><span class="fl-name">${flName}</span><span class="fl-serial">${flSerial}</span></td><td>${rec.dateStr||'—'}</td><td>${rec.timeStr||'—'}</td><td>${opDisplay}</td><td>${rec.hourMeter||'—'}</td><td><span class="badge ${rec.hasFail?'badge-fail':'badge-pass'}">${rec.hasFail?'FAIL':'PASS'}</span></td><td><div class="checks-row">${dots}</div></td><td>${rec.failedItems?`<span class="fail-note">${rec.failedItems}</span>`:'<span style="color:#a0aec0">—</span>'}</td><td><button class="btn-expand" data-target="${rowId}">▾</button></td>`;
-    tbody.appendChild(tr);
-    const checksDetail=CHECK_KEYS.map(k=>`<div class="check-entry ${checkEntryClass(rec.checks[k])}"><span class="check-name">${CHECK_LABELS[k]}</span><span class="check-val">${rec.checks[k]||'—'}</span></div>`).join('');
-    const noteHtml=rec.failedItems?`<div class="detail-fail-note">⚠ Operator notes: ${rec.failedItems}</div>`:'';
-    const dr=document.createElement('tr');
-    dr.className='detail-row'; dr.id=rowId;
-    dr.innerHTML=`<td class="detail-cell" colspan="9"><div class="detail-meta">${flName} (${flSerial}) — ${rec.dateStr} ${rec.timeStr} — ${opDisplay} — Hour Meter: ${rec.hourMeter||'—'}</div><div class="checks-detail">${checksDetail}</div>${noteHtml}</td>`;
-    tbody.appendChild(dr);
-  });
-  tbody.querySelectorAll('.btn-expand').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const target=document.getElementById(btn.dataset.target);
-      if(!target)return;
-      const open=target.classList.toggle('open');
-      btn.textContent=open?'▴':'▾';
+/* ================= gviz query per tab ================= */
+function queryTab(sheetName){
+  return new Promise((resolve)=>{
+    const url = "https://docs.google.com/spreadsheets/d/" + CONFIG.SHEET_ID +
+                "/gviz/tq?sheet=" + encodeURIComponent(sheetName) + "&headers=1";
+    const q = new google.visualization.Query(url);
+    q.send(function(resp){
+      if(resp.isError()){ resolve({serial:sheetName, error:resp.getMessage()||"Could not read this tab", records:[]}); return; }
+      const dt = resp.getDataTable();
+      const records = [];
+      for(let r=0;r<dt.getNumberOfRows();r++){
+        const get = (c)=>{ const f=dt.getFormattedValue(r,c); return (f==null?"":String(f)).trim(); };
+        // skip wholly empty rows
+        let any=false; for(let c=0;c<dt.getNumberOfColumns();c++){ if(get(c)){any=true;break;} }
+        if(!any) continue;
+        const rec = {
+          serial: sheetName,
+          timestamp: get(COLS.timestamp),
+          date: get(COLS.date),
+          hours: get(COLS.hours),
+          failedText: get(COLS.failedText),
+          items: {}
+        };
+        COLS.inspection.forEach(c=>{ rec.items[c] = get(c); });
+        rec.hasFail = Object.values(rec.items).some(v=>/fail/i.test(v)) || !!rec.failedText.trim();
+        records.push(rec);
+      }
+      resolve({serial:sheetName, records});
     });
   });
 }
 
-document.querySelectorAll('thead th[data-col]').forEach(th=>{
-  th.addEventListener('click',()=>{
-    const col=th.dataset.col;
-    if(sortCol===col){sortDir=sortDir==='asc'?'desc':'asc';}else{sortCol=col;sortDir=col==='date'?'desc':'asc';}
-    document.querySelectorAll('thead th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
-    th.classList.add(sortDir==='asc'?'sort-asc':'sort-desc');
-    applyFilters();
+/* ================= Build & render ================= */
+let ALL = [];   // flattened records
+let UNITS = []; // per-forklift summaries
+
+function parseWhen(rec){
+  const t = Date.parse(rec.timestamp) || Date.parse(rec.date);
+  return isNaN(t)?0:t;
+}
+
+async function load(){
+  const serials = activeSerials();
+  const state = document.getElementById("state");
+  if(!serials.length){ showSetup(); return; }
+  state.style.display="";
+  state.innerHTML = '<div class="spinner"></div><h3>Connecting to your sheet…</h3><p>Reading '+serials.length+' forklift '+(serials.length===1?'tab':'tabs')+'.</p>';
+
+  const results = await Promise.all(serials.map(queryTab));
+  ALL = []; UNITS = [];
+  let errors = [];
+  results.forEach(res=>{
+    if(res.error){ errors.push(res.serial+" — "+res.error); }
+    res.records.forEach(r=>ALL.push(r));
+    const recs = res.records.slice().sort((a,b)=>parseWhen(b)-parseWhen(a));
+    const last = recs[0];
+    let itemChecks=0, itemFails=0, failInspections=0;
+    recs.forEach(r=>{
+      if(r.hasFail) failInspections++;
+      Object.values(r.items).forEach(v=>{ if(/pass|fail/i.test(v)){itemChecks++; if(/fail/i.test(v)) itemFails++;} });
+    });
+    UNITS.push({ serial:res.serial, count:recs.length, last, failInspections, itemChecks, itemFails, recs });
   });
-});
 
-document.querySelector('thead th[data-col="date"]').classList.add('sort-desc');
+  if(ALL.length===0 && errors.length===serials.length){ showError(errors); return; }
+  state.style.display="none";
+  renderStrip(); renderFleet(); renderTable(); stampRefreshed();
+  if(errors.length){ console.warn("Tabs that could not be read:\n"+errors.join("\n")); }
+}
 
-['f-forklift','f-operator','f-from','f-to','f-fails'].forEach(id=>{
-  document.getElementById(id).addEventListener(id==='f-operator'?'input':'change',applyFilters);
-});
+function renderStrip(){
+  const now=Date.now(), week=now-7*864e5;
+  const withFail = ALL.filter(r=>r.hasFail).length;
+  set("s-fleet", UNITS.filter(u=>u.count>0).length + '<small> / '+UNITS.length+'</small>');
+  set("s-total", ALL.length);
+  set("s-week", ALL.filter(r=>parseWhen(r)>=week).length);
+  set("s-fails", withFail);
+}
 
-document.getElementById('btn-clear').addEventListener('click',()=>{
-  document.getElementById('f-forklift').value='';
-  document.getElementById('f-operator').value='';
-  document.getElementById('f-from').value='';
-  document.getElementById('f-to').value='';
-  document.getElementById('f-fails').checked=false;
-  applyFilters();
-});
+function renderFleet(){
+  const wrap=document.getElementById("fleet"); wrap.innerHTML="";
+  UNITS.sort((a,b)=> (b.last?parseWhen(b.last):0) - (a.last?parseWhen(a.last):0));
+  UNITS.forEach(u=>{
+    const card=document.createElement("div"); card.className="card";
+    let pill='<span class="pill none">No records</span>';
+    if(u.last) pill = u.last.hasFail ? '<span class="pill bad">Last: fail</span>' : '<span class="pill ok">Last: all pass</span>';
+    let pips="";
+    if(u.last){
+      COLS.inspection.forEach(c=>{
+        const v=(u.last.items[c]||"");
+        const cls = /fail/i.test(v)?"f":(/pass/i.test(v)?"":"b");
+        pips += '<span class="pip '+cls+'" title="'+SHORT[c]+': '+(v||"not recorded")+'"></span>';
+      });
+    }
+    const when = u.last ? (u.last.date || u.last.timestamp || "—") : "—";
+    const failRate = u.itemChecks ? Math.round((1-u.itemFails/u.itemChecks)*100) : null;
+    card.innerHTML =
+      '<div class="top"><div class="serial"><small>Serial</small>'+esc(u.serial)+'</div>'+pill+'</div>'+
+      '<div class="lastrow">Last check <b>'+esc(when)+'</b></div>'+
+      '<div class="pips">'+(pips||'<span style="font-size:12px;color:var(--muted)">awaiting first inspection</span>')+'</div>'+
+      '<div class="foot"><span><b>'+u.count+'</b> logged</span>'+
+        (failRate!==null?'<span><b>'+failRate+'%</b> pass</span>':'<span>—</span>')+'</div>';
+    wrap.appendChild(card);
+  });
+}
 
-loadData();
+let SORT={key:"when",dir:-1};
+function renderTable(){
+  document.getElementById("tablewrap").style.display="";
+  const thead=document.getElementById("thead");
+  const heads = ['Forklift','Logged','Hour meter', ...COLS.inspection.map(c=>SHORT[c]), 'Failed items noted'];
+  thead.innerHTML = '<tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr>';
+
+  const fSer=document.getElementById("f-serial");
+  if(fSer.options.length<=1){
+    [...new Set(ALL.map(r=>r.serial))].sort().forEach(s=>{
+      const o=document.createElement("option"); o.value=s; o.textContent=s; fSer.appendChild(o);
+    });
+  }
+  drawRows();
+  document.getElementById("rec-hint").textContent = ALL.length + ' record' + (ALL.length===1?'':'s');
+}
+
+function drawRows(){
+  const ser=document.getElementById("f-serial").value;
+  const res=document.getElementById("f-result").value;
+  const q=document.getElementById("f-search").value.trim().toLowerCase();
+  let rows=ALL.slice().sort((a,b)=>parseWhen(b)-parseWhen(a));
+  if(ser) rows=rows.filter(r=>r.serial===ser);
+  if(res==="fail") rows=rows.filter(r=>r.hasFail);
+  if(res==="pass") rows=rows.filter(r=>!r.hasFail);
+  if(q) rows=rows.filter(r=>(r.serial+" "+r.timestamp+" "+r.date+" "+r.failedText).toLowerCase().includes(q));
+
+  const tb=document.getElementById("tbody");
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="'+(3+COLS.inspection.length+1)+'" style="padding:22px;text-align:center;color:var(--muted)">No records match these filters.</td></tr>'; return; }
+  tb.innerHTML = rows.map(r=>{
+    const cells = COLS.inspection.map(c=>{
+      const v=r.items[c]||"";
+      if(/pass/i.test(v)) return '<td><span class="res ok">Pass</span></td>';
+      if(/fail/i.test(v)) return '<td><span class="res bad">Fail</span></td>';
+      return '<td><span class="res blank">—</span></td>';
+    }).join('');
+    return '<tr class="'+(r.hasFail?'hasfail':'')+'">'+
+      '<td class="serial-c">'+esc(r.serial)+'</td>'+
+      '<td class="mono">'+esc(r.timestamp||r.date||'—')+'</td>'+
+      '<td class="mono">'+esc(r.hours||'—')+'</td>'+
+      cells+
+      '<td class="'+(r.failedText?'failtext':'')+'">'+(r.failedText?esc(r.failedText):'<span class="res blank">—</span>')+'</td>'+
+    '</tr>';
+  }).join('');
+}
+
+/* ================= helpers / states ================= */
+function set(id,html){ document.getElementById(id).innerHTML=html; }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
+function stampRefreshed(){ document.getElementById("refreshed").textContent = "Updated "+new Date().toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+
+function showSetup(){
+  document.getElementById("strip").style.display="none";
+  document.getElementById("tablewrap").style.display="none";
+  document.getElementById("state").innerHTML =
+    '<h3>Add your forklifts to begin</h3>'+
+    '<p>This board reads each forklift tab in your responses sheet by name.</p>'+
+    '<ol><li>Click <b>Forklifts</b> (top right).</li>'+
+    '<li>Paste your serial numbers — these are the <b>tab names</b> in the sheet.</li>'+
+    '<li>Save. The board loads every matching tab and stays in sync on each visit.</li></ol>'+
+    '<p style="margin-top:14px">Make sure the sheet is shared as <b>Anyone with the link can view</b> so the board can read it.</p>';
+}
+function showError(errors){
+  document.getElementById("strip").style.display="none";
+  document.getElementById("state").innerHTML =
+    '<h3>Couldn\u2019t read the sheet</h3>'+
+    '<p>The board reached Google but no tabs returned data. The most common cause is sharing: open the sheet, click <b>Share</b>, and set <b>Anyone with the link · Viewer</b>. Also confirm the serials below match the tab names exactly.</p>'+
+    '<ol>'+errors.slice(0,8).map(e=>'<li><code>'+esc(e)+'</code></li>').join('')+'</ol>';
+}
+
+/* dialog */
+const dlg=document.getElementById("dlg");
+document.getElementById("manageBtn").onclick=()=>{
+  document.getElementById("serialInput").value = activeSerials().join("\n");
+  dlg.showModal();
+};
+document.getElementById("dlgCancel").onclick=()=>dlg.close();
+document.getElementById("dlgSave").onclick=()=>{
+  const list=document.getElementById("serialInput").value.split(/[,\n;]+/).map(s=>s.trim()).filter(Boolean);
+  location.hash = "units="+encodeURIComponent(list.join(","));
+  dlg.close(); load();
+};
+document.getElementById("refreshBtn").onclick=()=>load();
+["f-serial","f-result","f-search"].forEach(id=>document.getElementById(id).addEventListener("input",drawRows));
+window.addEventListener("hashchange",load);
+
+/* boot */
+function boot(){
+  if(typeof google==="undefined" || !google.charts){
+    document.getElementById("state").innerHTML='<h3>Offline preview</h3><p>This board needs an internet connection to read the sheet. Open it from a hosted location (e.g. GitHub Pages) or any browser tab to see live records.</p>';
+    return;
+  }
+  google.charts.load("current");
+  google.charts.setOnLoadCallback(load);
+}
+boot();
 </script>
 </body>
 </html>
