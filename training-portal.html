@@ -280,7 +280,7 @@ const CONFIG = {
         "required": "ALL",
         "recurrence": "Annual",
         "passingScore": 80,
-        "video": "",
+        "video": {"en": "https://www.youtube.com/embed/ucUh6cX1t9g", "es": "https://www.youtube.com/embed/CeiMrW9qHj4"},
         "description": "Good Manufacturing Practices that keep our cans and containers safe for food contact: personal hygiene, foreign-material control, plant and grounds, and employee conduct (PRO-009-000).",
         "questions": [
           {
@@ -492,7 +492,7 @@ const CONFIG = {
         "required": "ALL",
         "recurrence": "Annual",
         "passingScore": 80,
-        "video": "",
+        "video": {"en": "https://www.youtube.com/embed/IN_y9l1jBAo", "es": "https://www.youtube.com/embed/ZYg70Mnd9HQ"},
         "description": "Protecting product from intentional tampering, sabotage, and fraud: insider threats, site security, supplier conformance, and how to report a concern.",
         "questions": [
           {
@@ -704,7 +704,7 @@ const CONFIG = {
         "required": "ALL",
         "recurrence": "Annual",
         "passingScore": 80,
-        "video": "",
+        "video": {"en": "https://www.youtube.com/embed/XcydFv1wrvA", "es": "https://www.youtube.com/embed/rnvQLCQufNs"},
         "description": "Managing exposure to blood and bodily fluids to protect product and people: incident response, decontamination, biohazard handling, and required reporting (PRO-035-000).",
         "questions": [
           {
@@ -956,7 +956,7 @@ const CONFIG = {
         ],
         "recurrence": "Triennial",
         "passingScore": 80,
-        "video": "",
+        "video": {"en": "https://www.youtube.com/embed/ABhfOXv3ibs", "es": "https://www.youtube.com/embed/58thVLkisBU"},
         "description": "Safe powered-industrial-truck operation under OSHA 29 CFR 1910.178: authorization, pre-operation inspection, propane handling, travel and pedestrian rules, load handling, and refresher requirements.",
         "questions": [
           {
@@ -1359,7 +1359,7 @@ const CONFIG = {
 
   /* ---- Detail + quiz ---- */
   function videoEmbed(t){
-    if(t.video) return `<div class="video-wrap"><iframe src="${esc(t.video)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="${esc(t.title)}"></iframe></div>`;
+    const _vs=LX(t.video); if(_vs) return `<div class="video-wrap"><iframe src="${esc(_vs)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="${esc(t.title)}"></iframe></div>`;
     return `<div class="video-wrap"><div class="video-ph"><b>${esc(T('videoSoon'))}</b>${esc(T('videoSoonSub'))}</div></div>`;
   }
   function openTraining(id){
