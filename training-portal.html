@@ -1279,7 +1279,7 @@ const CONFIG = {
   function isRequired(t, role){ return t.required==='ALL' || (Array.isArray(t.required) && t.required.includes(role)); }
 
   /* ---- tabs / views ---- */
-  const VIEWS=[{id:'matrix',label:'Training Matrix'},{id:'status',label:'Completion Status'},{id:'trainings',label:'Trainings',count:()=>CONFIG.trainings.length},{id:'records',label:'Records'}];
+  const VIEWS=[{id:'matrix',label:'Required Trainings by Job Title'},{id:'status',label:'Completion Status'},{id:'trainings',label:'Trainings',count:()=>CONFIG.trainings.length},{id:'records',label:'Records'}];
   function buildTabs(){
     $('tabs').innerHTML=VIEWS.map(v=>`<button class="tab" role="tab" data-view="${v.id}" aria-selected="${v.id==='matrix'}">${esc(v.label)}${v.count?`<span class="cnt">${v.count()}</span>`:''}</button>`).join('');
     $('tabs').querySelectorAll('.tab').forEach(b=> b.onclick=()=>setView(b.dataset.view));
@@ -1304,7 +1304,7 @@ const CONFIG = {
       return `<tr data-role="${esc(role)}"><td class="t-name">${esc(role)}</td>${cells}</tr>`;
     }).join('');
     $('view-matrix').innerHTML=`
-      <div class="view-head"><h1 class="serif">Training Matrix</h1>
+      <div class="view-head"><h1 class="serif">Required Trainings by Job Title</h1>
         <p>Which trainings each job title must complete, and how often they repeat. Roles come from the Title column of FRM-025-003; add a training in CONFIG and a new column appears here automatically.</p></div>
       <div class="toolbar"><span class="field"><input id="mx-search" type="text" placeholder="Filter job titles\u2026"></span><span class="spacer"></span><span class="legend"><span><span class="req-dot">\u2713</span>Required</span></span></div>
       <div class="tbl-wrap"><table class="matrix">
