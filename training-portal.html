@@ -1452,8 +1452,8 @@ const CONFIG = {
     const filtered=(records||[]).filter(r=>{ const hay=`${r.Name||''} ${r.Training||''} ${r['Employee ID']||''}`.toLowerCase(); return (!q||hay.includes(q)) && (!rf||(r.Result||'')===rf); });
     const mount=$('rec-mount');
     if(!filtered.length){ mount.innerHTML=`<div class="empty"><b>No attempts recorded yet</b>${info&&info.local?'Connect CONFIG.records.endpoint, then completed tests will appear here.':'Once someone completes a test, every attempt shows up here.'}</div>`; return; }
-    mount.innerHTML=`<div class="tbl-wrap"><table class="records"><thead><tr><th>Date</th><th>Name</th><th>ID</th><th>Training</th><th>Lang</th><th>Score</th><th>%</th><th>Result</th></tr></thead>
-      <tbody>${filtered.map(r=>`<tr><td>${fmtDate(r.Timestamp)}</td><td>${esc(r.Name||'')}</td><td>${esc(r['Employee ID']||'')}</td><td>${esc(r.Training||'')}</td><td>${esc((r.Language||'').toString().toUpperCase())}</td><td>${esc(r.Score)}/${esc(r.Total)}</td><td>${esc(r.Percent)}%</td><td class="${(r.Result||'')==='Pass'?'res-pass':'res-fail'}">${esc(r.Result||'')}</td></tr>`).join('')}</tbody></table></div>
+    mount.innerHTML=`<div class="tbl-wrap"><table class="records"><thead><tr><th>Date</th><th>Name</th><th>Training</th><th>Lang</th><th>Score</th><th>%</th><th>Result</th></tr></thead>
+      <tbody>${filtered.map(r=>`<tr><td>${fmtDate(r.Timestamp)}</td><td>${esc(r.Name||'')}</td><td>${esc(r.Training||'')}</td><td>${esc((r.Language||'').toString().toUpperCase())}</td><td>${esc(r.Score)}/${esc(r.Total)}</td><td>${esc(r.Percent)}%</td><td class="${(r.Result||'')==='Pass'?'res-pass':'res-fail'}">${esc(r.Result||'')}</td></tr>`).join('')}</tbody></table></div>
       <p class="muted-note" style="margin-top:10px">${filtered.length} attempt${filtered.length!==1?'s':''} shown.</p>`;
   }
   function exportCsv(){
