@@ -187,6 +187,8 @@ main{max-width:1240px;margin:0 auto;padding:30px 28px 70px}
 }
 .card-links li a:hover{background:var(--sky);color:var(--navy)}
 /* name + optional one-line description stack (used on the AI Resources card) */
+.card-links li a .lk-logo{width:22px;height:22px;flex:none;border-radius:5px;object-fit:contain;background:#fff}
+.card-links li a.withdesc .lk-logo{margin-top:2px}
 .card-links li a .lk-text{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
 .card-links li a.withdesc{align-items:flex-start}
 .card-links li a.withdesc .lk-name{font-weight:600;color:var(--navy)}
@@ -327,6 +329,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
    • add  ext:true            -> forces the external ↗ icon
    • add  hrefMobile:'…'      -> (quick links only) opens a different URL on phones/tablets
    • add  desc:'…'            -> a one-line description under the link (used on the AI Resources card)
+   • add  logo:'https://…'    -> a small site icon shown to the left of the link
 
    Lines starting with // are notes to yourself and are ignored.
    =================================================================== */
@@ -360,11 +363,11 @@ const CONFIG = {
       title:'AI Resources',
       accent:'#2540bf', tag:'AI',
       links:[
-        { name:'Gemini',      desc:'Run your Google apps — summarize email, build Sheets, and schedule in Calendar.', href:'https://gemini.google.com', ext:true },
-        { name:'Nano Banana', desc:'Create and edit images, posters, and infographics (inside Gemini → “Create images”).', href:'https://gemini.google.com', ext:true },
-        { name:'Claude',      desc:'Build finished documents, slide decks, and spreadsheets you can download.', href:'https://claude.ai', ext:true },
-        { name:'ChatGPT',     desc:'Learn a new skill, brainstorm ideas, and get answers to general questions.', href:'https://chatgpt.com', ext:true },
-        { name:'Copilot',     desc:'AI help built into Microsoft Word, Excel, and Outlook.', href:'https://copilot.microsoft.com', ext:true }
+        { name:'Gemini',      logo:'https://www.google.com/s2/favicons?domain=gemini.google.com&sz=64',     desc:'Run your Google apps — summarize email, build Sheets, and schedule in Calendar.', href:'https://gemini.google.com', ext:true },
+        { name:'Nano Banana', logo:'https://www.google.com/s2/favicons?domain=gemini.google.com&sz=64',     desc:'Create and edit images, posters, and infographics (inside Gemini → “Create images”).', href:'https://gemini.google.com', ext:true },
+        { name:'Claude',      logo:'https://www.google.com/s2/favicons?domain=claude.ai&sz=64',              desc:'Build finished documents, slide decks, and spreadsheets you can download.', href:'https://claude.ai', ext:true },
+        { name:'ChatGPT',     logo:'https://www.google.com/s2/favicons?domain=chatgpt.com&sz=64',            desc:'Learn a new skill, brainstorm ideas, and get answers to general questions.', href:'https://chatgpt.com', ext:true },
+        { name:'Copilot',     logo:'https://www.google.com/s2/favicons?domain=copilot.microsoft.com&sz=64',  desc:'AI help built into Microsoft Word, Excel, and Outlook.', href:'https://copilot.microsoft.com', ext:true }
       ]
     },
     {
@@ -420,6 +423,7 @@ const CONFIG = {
       const isExt = l.ext || /^https?:\/\//.test(l.href||'');
       const cls = [isExt?'ext':'', l.desc?'withdesc':''].filter(Boolean).join(' ');
       return `<li><a class="${cls}" href="${esc(l.href||'#')}" ${isExt?'target="_blank" rel="noopener"':''}>
+                ${l.logo?`<img class="lk-logo" src="${esc(l.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}
                 <span class="lk-text"><span class="lk-name">${esc(l.name)}</span>${l.desc?`<small class="lk-desc">${esc(l.desc)}</small>`:''}</span>
                 ${l.new?'<span class="pill-new">New</span>':''}
                 <span class="arrow"></span>
