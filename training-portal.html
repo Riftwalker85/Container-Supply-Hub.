@@ -218,7 +218,6 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
     </div>
     <div class="topbar-actions">
       <span class="langtog" id="langtog"></span>
-      <span class="who" id="who"></span>
       <a class="btn-ghost" href="index.html">← Hub</a>
     </div>
   </div>
@@ -227,9 +226,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
 <nav class="tabbar"><div class="tabbar-inner" id="tabs" role="tablist"></div></nav>
 
 <main>
-  <section class="view active" id="view-matrix"></section>
-  <section class="view" id="view-status"></section>
-  <section class="view" id="view-trainings"></section>
+  <section class="view active" id="view-trainings"></section>
   <section class="view" id="view-detail"></section>
   <section class="view" id="view-records"></section>
 </main>
@@ -1167,13 +1164,13 @@ const CONFIG = {
   const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const $ = id => document.getElementById(id);
   const PASS_DEFAULT = CONFIG.records.defaultPassingScore || 80;
-  let currentView = 'matrix';
+  let currentView = 'trainings';
   let activeTrainingId = null;
 
   /* ---- language ---- */
   const LANG_KEY = 'csc_tp_lang';
   function getLang(){ try{ return localStorage.getItem(LANG_KEY) || 'en'; }catch(_){ return 'en'; } }
-  function setLang(l){ try{ localStorage.setItem(LANG_KEY, l); }catch(_){}; document.documentElement.lang=l; renderLangToggle(); renderWho(); rerender(); }
+  function setLang(l){ try{ localStorage.setItem(LANG_KEY, l); }catch(_){}; document.documentElement.lang=l; renderLangToggle(); rerender(); }
   function LX(o){ if(o==null) return ''; if(typeof o==='string') return o; return o[getLang()]||o.en||''; }
   const I18N = {
     en:{ take:'Take the test \u25b8', start:'Start \u25b8', allTrainings:'\u2190 All trainings',
@@ -1223,30 +1220,22 @@ const CONFIG = {
   }
 
   /* ---- identity ---- */
-  const ID_KEY='csc_tp_identity';
-  function getIdentity(){ try{ return JSON.parse(localStorage.getItem(ID_KEY)||'null'); }catch(_){ return null; } }
-  function setIdentity(o){ try{ localStorage.setItem(ID_KEY, JSON.stringify(o)); }catch(_){}; renderWho(); }
-  function renderWho(){
-    const u=getIdentity();
-    $('who').innerHTML = u
-      ? `${esc(T('signedAs'))} <b>${esc(u.name)}</b>${u.id?` (#${esc(u.id)})`:''} &nbsp;<button id="who-change">${esc(T('change'))}</button>`
-      : `<button id="who-change">${esc(T('setName'))}</button>`;
-    const b=$('who-change'); if(b) b.onclick=()=>openIdModal();
-  }
+  // Shared computer: the name is NOT persisted. It is collected fresh at the
+  // start of each test and used only for that one attempt's record.
+  let taker = null;
   let idCallback=null;
   function openIdModal(cb){
     idCallback=cb||null;
-    const u=getIdentity();
     $('idm-title').textContent=T('beforeBegin');
     $('idm-sub').textContent=T('beforeBeginSub');
     $('idm-name-label').textContent=T('fullName');
     $('id-save').textContent=T('save'); $('id-cancel').textContent=T('cancel');
-    $('id-name').value=u?u.name:'';
+    $('id-name').value='';
     $('id-modal').classList.add('show'); $('id-name').focus();
   }
   function closeIdModal(){ $('id-modal').classList.remove('show'); idCallback=null; }
   $('id-save').onclick=()=>{ const name=$('id-name').value.trim(); if(!name){ $('id-name').focus(); return; }
-    setIdentity({name}); const cb=idCallback; closeIdModal(); if(cb) cb(); };
+    taker={name}; const cb=idCallback; closeIdModal(); if(cb) cb(); };
   $('id-cancel').onclick=closeIdModal;
   $('id-modal').addEventListener('click', e=>{ if(e.target===$('id-modal')) closeIdModal(); });
 
@@ -1276,7 +1265,7 @@ const CONFIG = {
   function isRequired(t, role){ return t.required==='ALL' || (Array.isArray(t.required) && t.required.includes(role)); }
 
   /* ---- tabs / views ---- */
-  const VIEWS=[{id:'matrix',label:'Required Trainings by Job Title'},{id:'status',label:'Completion Status'},{id:'trainings',label:'Trainings',count:()=>CONFIG.trainings.length},{id:'records',label:'Records'}];
+  const VIEWS=[{id:'trainings',label:'Trainings',count:()=>CONFIG.trainings.length},{id:'records',label:'Records'}];
   function buildTabs(){
     $('tabs').innerHTML=VIEWS.map(v=>`<button class="tab" role="tab" data-view="${v.id}" aria-selected="${v.id==='matrix'}">${esc(v.label)}${v.count?`<span class="cnt">${v.count()}</span>`:''}</button>`).join('');
     $('tabs').querySelectorAll('.tab').forEach(b=> b.onclick=()=>setView(b.dataset.view));
@@ -1287,58 +1276,8 @@ const CONFIG = {
     $('view-'+name).classList.add('active');
     $('tabs').querySelectorAll('.tab').forEach(b=> b.setAttribute('aria-selected', b.dataset.view===name));
     if(!skipScroll) window.scrollTo({top:0,behavior:'smooth'});
-    if(name==='matrix') renderMatrix();
-    if(name==='status') renderStatus();
     if(name==='trainings') renderCatalog();
     if(name==='records') renderRecords();
-  }
-
-  /* ---- Matrix: roles (rows) × trainings (cols) ---- */
-  function renderMatrix(){
-    const ts=CONFIG.trainings;
-    const body=CONFIG.roles.map(role=>{
-      const cells=ts.map(t=>`<td class="cell-req">${isRequired(t,role)?`<span class="req-dot" title="Required: ${esc(t.title)}">\u2713</span>`:'<span class="req-no">\u00b7</span>'}</td>`).join('');
-      return `<tr data-role="${esc(role)}"><td class="t-name">${esc(role)}</td>${cells}</tr>`;
-    }).join('');
-    $('view-matrix').innerHTML=`
-      <div class="view-head"><h1 class="serif">Required Trainings by Job Title</h1>
-        <p>Which trainings each job title must complete, and how often they repeat. Roles come from the Title column of FRM-025-003; add a training in CONFIG and a new column appears here automatically.</p></div>
-      <div class="toolbar"><span class="field"><input id="mx-search" type="text" placeholder="Filter job titles\u2026"></span><span class="spacer"></span><span class="legend"><span><span class="req-dot">\u2713</span>Required</span></span></div>
-      <div class="tbl-wrap"><table class="matrix">
-        <thead><tr><th>Role (job title)</th>${ts.map(t=>`<th title="${esc(t.title)}">${esc(t.title)}<span style="display:block;font-weight:400;font-size:.72rem;color:#c2cbe0;margin-top:2px">${esc(t.recurrence)}</span></th>`).join('')}</tr></thead>
-        <tbody id="mx-body">${body}</tbody></table></div>`;
-    const s=$('mx-search'); if(s) s.oninput=()=>{ const qv=s.value.toLowerCase();
-      document.querySelectorAll('#mx-body tr').forEach(tr=>{ tr.style.display=(!qv||tr.dataset.role.toLowerCase().includes(qv))?'':'none'; }); };
-  }
-
-  /* ---- Completion Status ---- */
-  function latestPass(records, name, trainingId){
-    let best=null;
-    records.forEach(r=>{ const rn=(r.Name||'').toLowerCase().trim(); const rt=(r['Training ID']||r.trainingId||''); const res=(r.Result||'').toLowerCase();
-      if(rn===name.toLowerCase().trim() && rt===trainingId && res==='pass'){ const ts=new Date(r.Timestamp||r.ts||0).getTime(); if(!best||ts>best) best=ts; } });
-    return best;
-  }
-  function renderStatus(){
-    const head=`<div class="view-head"><h1 class="serif">Completion Status</h1>
-      <p>Each employee's standing on the trainings their role requires, based on recorded test passes. <span class="muted-note">Current = passed within the repeat window \u00b7 Due = passed but expired \u00b7 Missing = no passing attempt on record.</span></p></div>`;
-    if(!CONFIG.employees||!CONFIG.employees.length){
-      $('view-status').innerHTML=head+`<div class="empty"><b>No roster yet</b>Add staff to the <code>employees</code> list in CONFIG to track who is current, due, or missing each required training.</div>`; return;
-    }
-    $('view-status').innerHTML=head+`<div class="muted-note">Loading records\u2026</div>`;
-    fetchRecords((records,info)=>{
-      const now=Date.now();
-      const rows=CONFIG.employees.map(emp=>{
-        const cells=CONFIG.trainings.map(t=>{
-          if(!isRequired(t,emp.role)) return `<td style="text-align:center;color:#c2cbe0">\u2014</td>`;
-          const lp=latestPass(records,emp.name,t.id); let cls='s-missing',txt='Missing';
-          if(lp){ const days=(now-lp)/86400000; if(days<=recurrenceDays(t.recurrence)){cls='s-current';txt='Current';} else {cls='s-due';txt='Due';} }
-          return `<td><span class="status-tag ${cls}" title="${esc(t.title)}">${txt}</span></td>`;
-        }).join('');
-        return `<tr><td><span class="t-name">${esc(emp.name)}</span><span class="t-sub">${esc(emp.role)}${emp.id?` \u00b7 #${esc(emp.id)}`:''}</span></td>${cells}</tr>`;
-      }).join('');
-      const cols=CONFIG.trainings.map(t=>`<th title="${esc(t.title)}">${esc(t.title.split(' ').slice(0,3).join(' '))}</th>`).join('');
-      $('view-status').innerHTML=head+`<div class="tbl-wrap"><table class="matrix"><thead><tr><th>Employee</th>${cols}</tr></thead><tbody>${rows}</tbody></table></div>${info&&info.local?`<p class="muted-note" style="margin-top:10px">No central records yet \u2014 connect CONFIG.records.endpoint for company-wide status.</p>`:''}`;
-    });
   }
 
   /* ---- Catalog ---- */
@@ -1378,7 +1317,7 @@ const CONFIG = {
     $('tabs').querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected','false'));
     window.scrollTo({top:0,behavior:'smooth'});
     $('back-cat').onclick=()=>setView('trainings');
-    $('start-quiz').onclick=()=>{ if(!getIdentity()){ openIdModal(()=>renderQuiz(t)); return; } renderQuiz(t); };
+    $('start-quiz').onclick=()=>{ openIdModal(()=>renderQuiz(t)); };
   }
   function renderQuiz(t){
     const qs=t.questions||[]; const lang=getLang();
@@ -1402,7 +1341,7 @@ const CONFIG = {
     if(!ep){ warn.textContent=T('needBackend'); warn.style.display='inline'; return; }
     const sub=$('submit-quiz'); sub.disabled=true; sub.textContent=T('grading');
     qs.forEach((q,i)=> document.querySelectorAll(`input[name="q${i}"]`).forEach(inp=>inp.disabled=true));
-    const u=getIdentity()||{name:'Unknown'};
+    const u=taker||{name:'Unknown'};
     const p=new URLSearchParams({ action:'grade', trainingId:t.id, title:t.title, name:u.name, id:u.id||'', answers:chosen.join(','), lang:getLang(), ua:(navigator.userAgent||'').slice(0,120) });
     jsonp(ep+'?'+p.toString(), (data,err)=>{
       if(err||!data||!data.ok){ sub.disabled=false; sub.textContent=T('submit'); qs.forEach((q,i)=>document.querySelectorAll(`input[name="q${i}"]`).forEach(inp=>inp.disabled=false));
@@ -1428,6 +1367,7 @@ const CONFIG = {
         <button class="btn secondary" id="retake">${esc(T('retake'))}</button>
         <button class="btn secondary" id="to-records">${esc(T('viewRecords'))}</button>
         <button class="btn" id="to-cat">${esc(T('backTrainings'))}</button></div>`;
+    taker=null;
     $('quiz-mount').appendChild(card); card.scrollIntoView({behavior:'smooth',block:'center'});
     $('retake').onclick=()=>openTraining(t.id);
     $('to-cat').onclick=()=>setView('trainings');
@@ -1464,7 +1404,7 @@ const CONFIG = {
 
   /* ---- boot ---- */
   document.documentElement.lang=getLang();
-  renderLangToggle(); renderWho(); buildTabs(); renderMatrix();
+  renderLangToggle(); buildTabs(); renderCatalog();
 })();
 </script>
 </body>
