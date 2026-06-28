@@ -293,65 +293,506 @@ const CONFIG = {
     defaultPassingScore: 80 // % needed to pass when a training doesn't set its own
   },
 
-  roles: ['Production','Maintenance','Warehouse','Receiving','Planning','Quality','Office'],
+  // Roles = job titles from the Title column of FRM-025-003 Training Matrix.
+  roles: ["Acctng-ActngClerk", "Electrical", "HmnRsrce-Director", "MtlDec-Foreman", "MtlDec-CtrOpr.trn", "MtlDec-Supervisor", "MtlDec-LiftDriver", "MtlDec-Utility", "MachShp-Mech.", "MtlDec-Presmn Trn", "MachShp-Mach.", "MachShp-Supervisor", "MachShop Trainee", "Metal-Supervisor", "Mtl-Bodymaker Op", "Metal-Press Opr.", "Janitor/Co-Wide", "Mtl-Utility", "Metal Sltr Bdymkr", "Metal-Line Opr.", "Mtl-Inv Control", "Metals-Foreman", "Metal-Foreman", "Palletizer", "Metal-Lead Man", "PlsDec-Pring Op", "Plastic-Packer", "PlsDec-LeadMan", "Pls-MntTechnician", "Plastic-CleanUp", "Pls-Set-Up Man", "Pls-SetUp/FKLFT", "Plastic-Leadman", "Plastic-Foreman", "Plastic Supervisor", "Maintenance Foreman", "Metal Press Mech", "Metal-Slit.Mech.", "Purchasing Manager", "President", "Chief Financial Officer", "QA-Trainee", "QA-Technical Dir.", "S&R-TrkDriver", "S&R-WareHouse", "S&R-WRHSE/TRKDRVR", "S&R-Foreman", "Logistics Manager", "Sales-Sales Rep.", "Sales/Mktg. Dir.", "Metal-CoilLineOpr"],
 
-  // Optional roster — powers the "Completion Status" tab. Replace the samples with real staff (or clear it).
-  employees: [
-    { name:'Sample Operator', id:'1001', role:'Production' },
-    { name:'Sample Technician', id:'1002', role:'Maintenance' },
-    { name:'Sample Clerk', id:'1003', role:'Receiving' }
-  ],
+  // Optional roster — powers the "Completion Status" tab. Add staff as { name, id, role } (role must match a title in `roles`).
+  // Left empty on purpose: this page is public on GitHub Pages, so employee names/IDs are NOT embedded here.
+  // Populate it only if you move the portal behind a company login.
+  employees: [],
 
-  trainings: [
+  trainings:
+  [
     {
-      id:'gmp-basics',
-      title:'GMP Basics for Food-Contact Packaging',
-      category:'Quality & Food Safety',
-      required:['Production','Maintenance','Warehouse','Receiving','Quality'],
-      recurrence:'Annual',
-      passingScore:80,
-      video:'',  // e.g. 'https://www.youtube.com/embed/XXXXXXXXXXX'
-      description:'Core Good Manufacturing Practices that keep our cans and containers safe for food contact: hygiene, foreign-material control, and personal conduct on the floor.',
-      questions:[
-        { q:'What is the main purpose of Good Manufacturing Practices (GMPs) at CSC?',
-          options:['To speed up the production line','To keep our packaging safe and free of contamination','To reduce electricity use','To schedule maintenance'],
-          answer:1 },
-        { q:'Where should personal items such as food and drinks be kept?',
-          options:['On the production line for convenience','In designated break areas only','Anywhere away from machinery','In your pocket'],
-          answer:1 },
-        { q:'You notice a piece of plastic strapping on the floor near the line. You should:',
-          options:['Leave it; housekeeping will get it','Remove it right away and report if needed','Kick it under the machine','Wait until the end of your shift'],
-          answer:1 },
-        { q:'Which of these is a foreign-material control practice?',
-          options:['Wearing loose jewelry','Using glass containers near the line','Following the tool-control and no-glass policies','Skipping hand washing to save time'],
-          answer:2 },
-        { q:'If you are sick with a contagious illness, you should:',
-          options:['Come in anyway to avoid falling behind','Notify your supervisor before handling product','Wear two pairs of gloves','Work only the night shift'],
-          answer:1 }
+      "id": "gmp",
+      "title": "GMP (including Personal Hygiene)",
+      "category": "Quality & Food Safety",
+      "required": "ALL",
+      "recurrence": "Annual",
+      "passingScore": 80,
+      "video": "",
+      "description": "Good Manufacturing Practices that keep our cans and containers safe for food contact: personal hygiene, foreign-material control, plant and grounds, and employee conduct (PRO-009-000).",
+      "questions": [
+        {
+          "q": "According to PRO-009-000, who holds the primary responsibility for ensuring that cGMPs are implemented and maintained at Container Supply Co.?",
+          "options": [
+            "The SQF Practitioner",
+            "The Quality Manager",
+            "Senior Management",
+            "All employees equally"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "If an employee has an open wound, boil, or sore that could contaminate food-contact packaging, they must:",
+          "options": [
+            "Use additional gloves and continue working",
+            "Apply a bandage and continue their shift without reporting it",
+            "Report to their supervisor and be excluded from operations until the condition is corrected",
+            "Work only in the warehouse, away from active production"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Under PRO-009-000, which statement BEST describes an employee's reporting obligations?",
+          "options": [
+            "Employees should report GMP violations only if they directly cause a safety incident",
+            "Reporting is required only for health-related concerns such as illness or injury",
+            "Employees are required to immediately report any health concern, GMP violation, unsafe condition, or contamination risk to their supervisor",
+            "An employee who observes but does not report a known GMP violation is not personally responsible for the violation"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Which of the following correctly lists the 5-Step Handwashing procedure required at Container Supply Co.?",
+          "options": [
+            "Wet hands, apply soap, rinse, dry, sanitize",
+            "Apply soap, scrub 10 seconds, rinse, sanitize, dry",
+            "Rinse with water, lather with soap, scrub for 20 seconds, rinse hands, dry with single-service towel",
+            "Rinse, scrub 10 seconds, soap, rinse, air dry"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Which of the following IS permitted for employees working in the production or warehouse area?",
+          "options": [
+            "Earrings and small rings under gloves",
+            "Cologne or light perfume",
+            "Rubber or slip-resistant closed-toe shoes",
+            "False fingernails without nail polish"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Under 21 CFR §117.20 (Plant and Grounds), which of the following is required for proper grounds maintenance?",
+          "options": [
+            "Installing perimeter CCTV surveillance at all entry points",
+            "Painting all exterior structures annually to prevent corrosion",
+            "Requiring all contractors to park in designated zones only",
+            "Removing litter, cutting weeds, and eliminating conditions that provide pest harborage"
+          ],
+          "answer": 3
+        },
+        {
+          "q": "At Container Supply Co., rubbish and waste must be picked up at a minimum of how often?",
+          "options": [
+            "Daily",
+            "Every three days",
+            "Once per week",
+            "Twice per month"
+          ],
+          "answer": 0,
+          "verify": true
+        },
+        {
+          "q": "Regarding cleaning chemicals and toxic materials in the facility, which statement is CORRECT?",
+          "options": [
+            "Any commercially available EPA-registered cleaning product may be used on-site",
+            "Only chemicals required for sanitation, lab testing, maintenance, and plant operations may be used or stored in the facility",
+            "Toxic chemicals may be stored anywhere in the plant as long as they are properly labeled",
+            "Pest control chemicals may be applied by any trained production employee"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "Under 21 CFR §117.93 (Warehousing and Distribution), storage and transportation of food must protect against:",
+          "options": [
+            "Physical contamination from pallets and racking only",
+            "Biological and chemical contamination only",
+            "Temperature abuse and moisture exposure only",
+            "Biological, chemical, physical, and radiological contamination — and against deterioration of the product and container"
+          ],
+          "answer": 3
+        },
+        {
+          "q": "Beard nets are mandatory at Container Supply Co. for employees with facial hair exceeding:",
+          "options": [
+            "¼ inch",
+            "½ inch",
+            "Beard nets are optional — they are a recommended practice only",
+            "⅛ inch"
+          ],
+          "answer": 3,
+          "verify": true
+        }
       ]
     },
     {
-      id:'hazcom-ghs',
-      title:'Hazard Communication & GHS Labels',
-      category:'Safety & Compliance',
-      required:['Production','Maintenance','Warehouse','Receiving','Planning','Quality','Office'],
-      recurrence:'Annual',
-      passingScore:80,
-      video:'',
-      description:'How to read GHS labels and Safety Data Sheets, what the pictograms mean, and where to find chemical safety information at CSC.',
-      questions:[
-        { q:'A Safety Data Sheet (SDS) tells you:',
-          options:['The price of a chemical','How to handle, store, and respond to a chemical safely','Who ordered the chemical','The delivery schedule'],
-          answer:1 },
-        { q:'A GHS pictogram showing a flame means the product is:',
-          options:['Corrosive','Flammable','Heavy','Expired'],
-          answer:1 },
-        { q:'Where can you find the SDS for a chemical you are using?',
-          options:['Only at the supplier','Through the SDS Lookup link on the Info Hub','You cannot access them','In the break room fridge'],
-          answer:1 },
-        { q:'A secondary container you pour a chemical into must be:',
-          options:['Left unlabeled','Labeled with the product name and hazard information','Hidden from view','Used only once'],
-          answer:1 }
+      "id": "product-defense",
+      "title": "Product Defense and Fraud in Manufacturing",
+      "category": "Safety & Compliance",
+      "required": "ALL",
+      "recurrence": "Annual",
+      "passingScore": 80,
+      "video": "",
+      "description": "Protecting product from intentional tampering, sabotage, and fraud: insider threats, site security, supplier conformance, and how to report a concern.",
+      "questions": [
+        {
+          "q": "What is the PRIMARY difference between Product Defense and Product Safety?",
+          "options": [
+            "Product Defense addresses accidental contamination; Product Safety addresses intentional tampering.",
+            "Product Defense addresses intentional tampering or sabotage; Product Safety addresses accidental contamination.",
+            "Product Defense applies only to metal cans; Product Safety applies only to plastic containers.",
+            "There is no difference — they are the same program."
+          ],
+          "answer": 1
+        },
+        {
+          "q": "Which SQF Edition 9 module covers Site Security (Product Defense)?",
+          "options": [
+            "Module 11.2",
+            "Module 13.2",
+            "Module 2.9",
+            "Module 5.4"
+          ],
+          "answer": 1,
+          "verify": true
+        },
+        {
+          "q": "According to the training, which group is statistically the MOST COMMON source of intentional product tampering?",
+          "options": [
+            "External hackers targeting IT systems",
+            "Disgruntled or coerced employees (insider threats)",
+            "Competitors attempting sabotage",
+            "Delivery drivers with unauthorized access"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "You are working on the production floor and notice a tool mark on a 3-piece metal can that is inconsistent with normal processing. What should you do FIRST?",
+          "options": [
+            "Try to fix the mark yourself before it causes a delay",
+            "Set it aside and continue production — it is probably nothing",
+            "Stop, do not touch it, and report it to your supervisor immediately",
+            "Throw it away and pull a replacement from inventory"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Which of the following is an example of Fraud in Manufacturing?",
+          "options": [
+            "A conveyor belt malfunction that causes containers to fall on the floor",
+            "A supplier quietly substituting a non-food-grade resin for approved virgin HDPE",
+            "A production worker accidentally mislabeling a single container",
+            "A power outage that disrupts the production line"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "What does a Certificate of Conformance (CoC) verify?",
+          "options": [
+            "That a supplier has been in business for at least 10 years",
+            "That an incoming material lot meets the required specifications",
+            "That a finished product has been approved for shipment by the customer",
+            "That an employee has completed their annual safety training"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "A coworker tells you to \"just use\" a bag of resin that has no label or QC release sticker because production is running behind. What should you do?",
+          "options": [
+            "Use it — your supervisor would not ask if it were not safe",
+            "Use half of it and report the rest",
+            "Refuse to use it and report the instruction to your supervisor or the Quality/Compliance Manager",
+            "Mix it with approved material so it is diluted"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Under the Container Supply Product Defense program, which of the following is YOUR personal responsibility regarding facility access?",
+          "options": [
+            "Allow coworkers to tailgate through secured doors to save time",
+            "Never prop open a secured door without authorization",
+            "Let contractors move freely without an escort to avoid interrupting your work",
+            "Disable a door alarm if it keeps going off during your shift"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "If you observe a potential fraud or tampering concern and your direct supervisor is unavailable, who should you contact?",
+          "options": [
+            "No one — wait until your supervisor returns",
+            "A coworker in the same department",
+            "The Quality or Compliance Manager directly",
+            "The customer whose product is affected"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Which statement about reporting a concern is TRUE?",
+          "options": [
+            "You must be 100% certain before reporting — do not report unless you have proof",
+            "Reporting a concern in good faith is always protected — you will not face retaliation",
+            "Reports should only be made at the end of the shift to avoid disrupting production",
+            "Only Quality Department employees are authorized to report fraud concerns"
+          ],
+          "answer": 1
+        }
+      ]
+    },
+    {
+      "id": "bloodborne",
+      "title": "Bloodborne Pathogen",
+      "category": "Safety & Compliance",
+      "required": "ALL",
+      "recurrence": "Annual",
+      "passingScore": 80,
+      "video": "",
+      "description": "Managing exposure to blood and bodily fluids to protect product and people: incident response, decontamination, biohazard handling, and required reporting (PRO-035-000).",
+      "questions": [
+        {
+          "q": "According to PRO-035-000, what is the PRIMARY purpose of the Bloodborne Pathogen program at Container Supply Co.?",
+          "options": [
+            "To ensure injured employees receive prompt first aid treatment",
+            "To eliminate product safety risk to customers and consumers by managing exposure to blood and bodily fluids",
+            "To comply with OSHA bloodborne pathogen standards for healthcare workers",
+            "To document all workplace injuries and near-misses for regulatory reporting"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "When a blood or bodily fluid incident occurs on the production floor, what is the FIRST action an employee must take?",
+          "options": [
+            "Locate the Blood Spill Clean-Up Kit and begin cleaning immediately",
+            "Notify the SQF Practitioner and wait for their arrival before doing anything",
+            "Stop ALL activities and traffic in the affected area immediately",
+            "Move nearby products to temporary storage before anything else"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Under PRO-035-000, products and packaging material found WITHIN the affected (contaminated) area must be:",
+          "options": [
+            "Moved to temporary storage until the area is cleaned",
+            "Immediately returned to production after a visual inspection",
+            "Placed on hold per PRO-012-000 Non-Conforming Product Management, or immediately destroyed following proper biohazard requirements",
+            "Tagged and stored in the warehouse pending a supervisor review"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Which of the following is NOT a required item in the Blood Spill Clean-Up Kit per PRO-035-000?",
+          "options": [
+            "Pre-moistened germicidal cloth",
+            "Latex gloves and absorbent towels",
+            "A disposable Tyvek coverall suit",
+            "Bio-hazard bag and plastic scoop"
+          ],
+          "answer": 2,
+          "verify": true
+        },
+        {
+          "q": "When decontaminating a large or porous surface that has been exposed to blood, the correct bleach-to-water ratio is:",
+          "options": [
+            "No less than 1 part bleach to 5 parts water (1:5)",
+            "No less than 1 part bleach to 10 parts water (1:10)",
+            "No less than 1 part bleach to 20 parts water (1:20)",
+            "Any dilution, as long as an EPA-registered germicide is used"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "An employee's clothing has been penetrated by blood during an incident. According to PRO-035-000, the employee must:",
+          "options": [
+            "Continue working and change clothes at the end of the shift",
+            "Apply an impermeable apron over the contaminated garment and finish the task",
+            "Remove the garment immediately, collect it in a biohazard bag, and have it laundered separately — informing laundry services it is contaminated",
+            "Rinse the garment with the bleach solution used on the work surface"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "After completing the decontamination of a blood spill, who is responsible for inspecting the area before it can be returned to production use?",
+          "options": [
+            "The department supervisor",
+            "The employee who performed the cleanup",
+            "Any trained production lead on duty",
+            "The SQF Practitioner or their designee"
+          ],
+          "answer": 3
+        },
+        {
+          "q": "Contaminated sharps and regulated waste must be placed in containers that are:",
+          "options": [
+            "Sealed plastic bags labeled with the employee's name and date",
+            "Closable, leak-proof, puncture-resistant, and appropriately labeled or red-colored",
+            "Standard corrugated cardboard boxes with a biohazard sticker",
+            "Any rigid container, provided it is sealed before disposal"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "Which of the following documents must be completed and kept on file for EVERY blood or bodily fluid incident at Container Supply Co.?",
+          "options": [
+            "PRO-012-000 Non-Conforming Product Hold Tag",
+            "PRO-017-000 Corrective and Preventive Action (CAPA) Report",
+            "FRM-035-001 Blood Exposure Event Report",
+            "An OSHA 300 Log entry"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Which of the following BEST explains why the Bloodborne Pathogen program at Container Supply Co. is a requirement under SQF Edition 9?",
+          "options": [
+            "SQF Edition 9 requires all food packaging facilities to maintain an OSHA-compliant bloodborne pathogen exposure control plan",
+            "Bloodborne pathogen control is a recognized prerequisite program; biological hazards must be identified and controlled under the product safety plan, and incidents require documented corrective actions",
+            "SQF Edition 9 Module 13 requires a minimum of two blood spill kits per 10,000 sq. ft. of production space",
+            "SQF certification requires all employees to hold a current first aid and CPR certification"
+          ],
+          "answer": 1
+        }
+      ]
+    },
+    {
+      "id": "forklift",
+      "title": "Forklift Safety and Operation",
+      "category": "Safety & Compliance",
+      "required": [
+        "Electrical",
+        "MtlDec-Foreman",
+        "MtlDec-CtrOpr.trn",
+        "MtlDec-Supervisor",
+        "MtlDec-LiftDriver",
+        "MtlDec-Utility",
+        "MachShp-Mech.",
+        "MtlDec-Presmn Trn",
+        "MachShp-Mach.",
+        "MachShp-Supervisor",
+        "MachShop Trainee",
+        "Metal-Supervisor",
+        "Mtl-Bodymaker Op",
+        "Metal-Press Opr.",
+        "Mtl-Utility",
+        "Metal Sltr Bdymkr",
+        "Mtl-Inv Control",
+        "Metals-Foreman",
+        "Metal-Foreman",
+        "Metal-Lead Man",
+        "PlsDec-Pring Op",
+        "Plastic-Packer",
+        "PlsDec-LeadMan",
+        "Pls-MntTechnician",
+        "Pls-Set-Up Man",
+        "Pls-SetUp/FKLFT",
+        "Plastic-Leadman",
+        "Plastic-Foreman",
+        "Plastic Supervisor",
+        "Maintenance Foreman",
+        "Metal Press Mech",
+        "QA-Trainee",
+        "QA-Technical Dir.",
+        "S&R-TrkDriver",
+        "S&R-WareHouse",
+        "S&R-WRHSE/TRKDRVR",
+        "S&R-Foreman",
+        "Logistics Manager",
+        "Metal-CoilLineOpr"
+      ],
+      "recurrence": "Triennial",
+      "passingScore": 80,
+      "video": "",
+      "description": "Safe powered-industrial-truck operation under OSHA 29 CFR 1910.178: authorization, pre-operation inspection, propane handling, travel and pedestrian rules, load handling, and refresher requirements.",
+      "questions": [
+        {
+          "q": "Under OSHA 29 CFR 1910.178, which of the following is required BEFORE an employee may operate a forklift unsupervised at Container Supply Co.?",
+          "options": [
+            "Completing an online safety video only",
+            "Receiving verbal authorization from a coworker who is already certified",
+            "Completing both a classroom/video training component and a hands-on practical evaluation on the specific equipment type",
+            "Holding a valid driver's license and completing one week of supervised operation"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "A pre-operation inspection must be completed:",
+          "options": [
+            "Once per week by the lead operator on each shift",
+            "Only when a forklift returns from maintenance",
+            "Before every shift, by the operator who will be using the forklift",
+            "At the beginning of each month as part of a documented safety audit"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "During your pre-operation inspection, you discover the parking brake does not hold properly. You must:",
+          "options": [
+            "Use extra caution and operate the forklift slowly until it can be repaired at shift end",
+            "Tag the forklift out of service and report the defect to your supervisor before operating",
+            "Operate the forklift in flat areas only until the brake is fixed",
+            "Ask a coworker to verify the issue and get their approval to continue using it"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "When exchanging a propane tank, which of the following is CORRECT?",
+          "options": [
+            "You may swap the tank indoors as long as the area is well ventilated",
+            "Wear gloves, close the service valve before disconnecting, and inspect the new tank for damage before mounting",
+            "Open the service valve fully before connecting the tank to purge any air from the line",
+            "Leave the engine running to maintain system pressure during the tank exchange"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "Because forklifts at Container Supply Co. do not have speedometers, how should operators judge their travel speed in open interior areas?",
+          "options": [
+            "Match the pace of other forklifts already moving in the same aisle",
+            "Travel at roughly 2 to 3 times a normal walking pace, and slow to a single walking pace at all intersections, doorways, and blind spots",
+            "Move as quickly as needed to stay efficient, stopping only when a pedestrian is directly in the path",
+            "Maintain a slow creeping pace at all times regardless of location"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "You are approaching a blind intersection in the warehouse. The correct action is to:",
+          "options": [
+            "Flash your headlights and proceed slowly",
+            "Stop completely and wait for another employee to act as a spotter",
+            "Sound your horn and slow to a walking pace before entering the intersection",
+            "Speed up slightly to clear the intersection quickly and reduce exposure time"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "Which of the following statements about load handling is CORRECT?",
+          "options": [
+            "It is acceptable to carry a load elevated if you are traveling slowly",
+            "You may exceed the rated load capacity by up to 10% if the load is evenly distributed",
+            "Forks should be 6–8 inches off the ground and tilted back during all travel",
+            "Loads should be set down quickly to reduce the time forks are elevated"
+          ],
+          "answer": 2
+        },
+        {
+          "q": "A pedestrian is standing near your planned travel path. You must:",
+          "options": [
+            "Sound your horn and continue at reduced speed — pedestrians are responsible for yielding to forklifts in work zones",
+            "Stop and wait for the pedestrian to clear the area before proceeding",
+            "Steer around the pedestrian, keeping at least 2 feet of clearance",
+            "Flash your lights and sound two short horn blasts to signal them to move"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "When parking a forklift at the end of your shift, which of the following steps is REQUIRED?",
+          "options": [
+            "Leave the forks in the travel position (6–8 inches off the ground) to save time at the start of the next shift",
+            "Lower forks to the floor, apply the parking brake, turn off the engine, and remove the key",
+            "Park in the nearest available open space and leave the key in the ignition for the next operator",
+            "Lower forks, set the throttle to idle, and leave the engine running to warm up for the next shift"
+          ],
+          "answer": 1
+        },
+        {
+          "q": "Refresher forklift training is required after which of the following events?",
+          "options": [
+            "An operator is observed operating the forklift safely and efficiently for 30 consecutive days",
+            "An operator completes their third year without any reported incidents",
+            "An operator is involved in a near-miss, accident, or observed unsafe operation, or is assigned to a different type of forklift",
+            "An operator requests a pay raise or promotion to a lead position"
+          ],
+          "answer": 2
+        }
       ]
     }
   ]
@@ -459,10 +900,11 @@ const CONFIG = {
 
   /* ---- recurrence helpers ---- */
   function recurrenceDays(r){
-    return ({Once:Infinity, Monthly:30, Quarterly:91, Annual:365, Biennial:730})[r] ?? 365;
+    return ({Once:Infinity, Monthly:30, Quarterly:91, Annual:365, Biennial:730, Triennial:1095})[r] ?? 365;
   }
   function trainingById(id){ return CONFIG.trainings.find(t=>t.id===id); }
   function passScore(t){ return t.passingScore || PASS_DEFAULT; }
+  function isRequired(t, role){ return t.required==='ALL' || (Array.isArray(t.required) && t.required.includes(role)); }
 
   /* =====================  VIEWS  ===================== */
   const VIEWS = [
@@ -489,36 +931,33 @@ const CONFIG = {
     if(name==='records')  renderRecords();
   }
 
-  /* ---- Matrix: trainings (rows) × roles (cols) ---- */
+  /* ---- Matrix: roles (rows) × trainings (cols) ---- */
   function renderMatrix(){
-    const roles = CONFIG.roles;
-    const rows = CONFIG.trainings.map(t=>{
-      const cells = roles.map(r=>{
-        const req = (t.required||[]).includes(r);
-        return `<td class="cell-req">${req?'<span class="req-dot" title="Required">✓</span>':'<span class="req-no">·</span>'}</td>`;
-      }).join('');
-      return `<tr>
-        <td><span class="t-name">${esc(t.title)}</span>
-            <span class="t-sub"><span class="chip chip-cat">${esc(t.category)}</span>
-            <span class="chip chip-rec">${esc(t.recurrence)}</span></span></td>
-        ${cells}</tr>`;
+    const ts = CONFIG.trainings;
+    const body = CONFIG.roles.map(role=>{
+      const cells = ts.map(t=>`<td class="cell-req">${isRequired(t,role)?`<span class="req-dot" title="Required: ${esc(t.title)}">✓</span>`:'<span class="req-no">·</span>'}</td>`).join('');
+      return `<tr data-role="${esc(role)}"><td class="t-name">${esc(role)}</td>${cells}</tr>`;
     }).join('');
     $('view-matrix').innerHTML = `
       <div class="view-head">
         <h1 class="serif">Training Matrix</h1>
-        <p>Which trainings are required for each role, and how often they repeat. Add a training in the file's CONFIG and a new row appears here automatically; add a role and a new column appears.</p>
+        <p>Which trainings each job title must complete, and how often they repeat. Roles come from the Title column of FRM-025-003; add a training in CONFIG and a new column appears here automatically.</p>
+      </div>
+      <div class="toolbar">
+        <span class="field"><input id="mx-search" type="text" placeholder="Filter job titles…"></span>
+        <span class="spacer"></span>
+        <span class="legend"><span><span class="req-dot">✓</span>Required</span></span>
       </div>
       <div class="tbl-wrap">
         <table class="matrix">
-          <thead><tr><th>Training</th>${roles.map(r=>`<th>${esc(r)}</th>`).join('')}</tr></thead>
-          <tbody>${rows||`<tr><td colspan="${roles.length+1}">No trainings defined yet.</td></tr>`}</tbody>
+          <thead><tr><th>Role (job title)</th>${ts.map(t=>`<th title="${esc(t.title)}">${esc(t.title)}<span style="display:block;font-weight:400;font-size:.72rem;color:#c2cbe0;margin-top:2px">${esc(t.recurrence)}</span></th>`).join('')}</tr></thead>
+          <tbody id="mx-body">${body}</tbody>
         </table>
-      </div>
-      <div class="legend"><span><span class="req-dot">✓</span>Required for this role</span>
-        <span><span class="chip chip-cat">Category</span></span>
-        <span><span class="chip chip-rec">How often it repeats</span></span></div>`;
+      </div>`;
+    const s = $('mx-search');
+    if(s) s.oninput = ()=>{ const qv=s.value.toLowerCase();
+      document.querySelectorAll('#mx-body tr').forEach(tr=>{ tr.style.display = (!qv || tr.dataset.role.toLowerCase().includes(qv)) ? '' : 'none'; }); };
   }
-
   /* ---- Completion Status: employees × required trainings (uses records) ---- */
   function latestPass(records, name, trainingId){
     let best = null;
@@ -547,8 +986,8 @@ const CONFIG = {
     fetchRecords((records, info)=>{
       const now = Date.now();
       const rows = CONFIG.employees.map(emp=>{
-        const reqd = CONFIG.trainings.filter(t=>(t.required||[]).includes(emp.role));
-        const cells = reqd.map(t=>{
+        const cells = CONFIG.trainings.map(t=>{
+          if(!isRequired(t, emp.role)) return `<td style="text-align:center;color:#c2cbe0">—</td>`;
           const lp = latestPass(records, emp.name, t.id);
           let cls='s-missing', txt='Missing';
           if(lp){
@@ -560,7 +999,7 @@ const CONFIG = {
         }).join('');
         return `<tr><td><span class="t-name">${esc(emp.name)}</span>
                   <span class="t-sub">${esc(emp.role)}${emp.id?` · #${esc(emp.id)}`:''}</span></td>
-                ${cells || '<td class="muted-note">No required trainings for this role</td>'}</tr>`;
+                ${cells}</tr>`;
       }).join('');
       // header columns = union of required trainings (kept simple: all trainings)
       const cols = CONFIG.trainings.map(t=>`<th title="${esc(t.title)}">${esc(t.title.split(' ').slice(0,3).join(' '))}</th>`).join('');
