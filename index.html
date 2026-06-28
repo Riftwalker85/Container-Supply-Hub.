@@ -186,7 +186,13 @@ main{max-width:1240px;margin:0 auto;padding:30px 28px 70px}
   padding:9px 12px;border-radius:8px;font-size:.93rem;transition:.13s;
 }
 .card-links li a:hover{background:var(--sky);color:var(--navy)}
+/* name + optional one-line description stack (used on the AI Resources card) */
+.card-links li a .lk-text{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.card-links li a.withdesc{align-items:flex-start}
+.card-links li a.withdesc .lk-name{font-weight:600;color:var(--navy)}
+.card-links li a .lk-desc{font-size:.76rem;line-height:1.32;color:var(--muted);font-weight:400}
 .card-links li a .arrow{margin-left:auto;color:#b7c0d4;transition:.13s;font-size:.9rem}
+.card-links li a.withdesc .arrow{margin-top:2px}
 .card-links li a:hover .arrow{color:var(--royal);transform:translateX(3px)}
 .card-links li a.ext .arrow::after{content:'\2197'}
 .card-links li a:not(.ext) .arrow::after{content:'\2192'}
@@ -320,6 +326,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
    • add  new:true            -> shows a small green "NEW" tag
    • add  ext:true            -> forces the external ↗ icon
    • add  hrefMobile:'…'      -> (quick links only) opens a different URL on phones/tablets
+   • add  desc:'…'            -> a one-line description under the link (used on the AI Resources card)
 
    Lines starting with // are notes to yourself and are ignored.
    =================================================================== */
@@ -327,7 +334,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
 const CONFIG = {
 
   /* footer info: bump these whenever you revise the page */
-  revision: '1.1',
+  revision: '1.2',
   updated:  'Jun 2026',
 
   /* the banner at the top. Edit text or set show:false */
@@ -349,6 +356,17 @@ const CONFIG = {
 
   /* CATEGORY CARDS — each has a title, accent color, optional tag, and links */
   categories: [
+    {
+      title:'AI Resources',
+      accent:'#2540bf', tag:'AI',
+      links:[
+        { name:'Gemini',      desc:'Run your Google apps — summarize email, build Sheets, and schedule in Calendar.', href:'https://gemini.google.com', ext:true },
+        { name:'Nano Banana', desc:'Create and edit images, posters, and infographics (inside Gemini → “Create images”).', href:'https://gemini.google.com', ext:true },
+        { name:'Claude',      desc:'Build finished documents, slide decks, and spreadsheets you can download.', href:'https://claude.ai', ext:true },
+        { name:'ChatGPT',     desc:'Learn a new skill, brainstorm ideas, and get answers to general questions.', href:'https://chatgpt.com', ext:true },
+        { name:'Copilot',     desc:'AI help built into Microsoft Word, Excel, and Outlook.', href:'https://copilot.microsoft.com', ext:true }
+      ]
+    },
     {
       title:'Tools & Utilities',
       accent:'#1f7a8c', tag:'Calc',
@@ -400,8 +418,9 @@ const CONFIG = {
     const accent = esc(cat.accent||'#2540bf');
     const links = cat.links.map(l=>{
       const isExt = l.ext || /^https?:\/\//.test(l.href||'');
-      return `<li><a class="${isExt?'ext':''}" href="${esc(l.href||'#')}" ${isExt?'target="_blank" rel="noopener"':''}>
-                <span>${esc(l.name)}</span>
+      const cls = [isExt?'ext':'', l.desc?'withdesc':''].filter(Boolean).join(' ');
+      return `<li><a class="${cls}" href="${esc(l.href||'#')}" ${isExt?'target="_blank" rel="noopener"':''}>
+                <span class="lk-text"><span class="lk-name">${esc(l.name)}</span>${l.desc?`<small class="lk-desc">${esc(l.desc)}</small>`:''}</span>
                 ${l.new?'<span class="pill-new">New</span>':''}
                 <span class="arrow"></span>
               </a></li>`;
