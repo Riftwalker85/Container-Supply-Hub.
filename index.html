@@ -126,6 +126,12 @@ main{max-width:1240px;margin:0 auto;padding:30px 28px 70px}
 }
 .section-head .rule{flex:1;height:1px;background:var(--line)}
 
+/* ── Company calendar embed ── */
+.cal-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden}
+.cal-card iframe{display:block;width:100%;border:0}
+@media(max-width:560px){.cal-card iframe{height:460px}}
+
 /* ── SQF live snapshot ── */
 .snap-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;
@@ -268,8 +274,12 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
 
 <!-- MAIN CONTENT (rendered from CONFIG) -->
 <main>
+
+  <!-- COMPANY CALENDAR (rendered from CONFIG.calendar) -->
+  <div id="cal-mount"></div>
+
   <div class="section-head snap-head">
-    <span class="num">01</span>
+    <span class="num">02</span>
     <h2 class="serif">SQF Compliance Snapshot</h2>
     <span class="live-dot" id="snap-dot" title="Live"></span>
     <span class="snap-meta">
@@ -285,14 +295,14 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
   </div>
 
   <div class="section-head">
-    <span class="num">02</span>
+    <span class="num">03</span>
     <h2 class="serif">Quick Links</h2>
     <span class="rule"></span>
   </div>
   <div class="quick-grid" id="quick-mount"></div>
 
   <div class="section-head">
-    <span class="num">03</span>
+    <span class="num">04</span>
     <h2 class="serif">Resources &amp; Reference</h2>
     <span class="rule"></span>
   </div>
@@ -348,6 +358,21 @@ const CONFIG = {
     text:  'This page replaces the old employee portal and is now our central location for company communication, information, and helpful tools. Bookmark it and check back often for updates.'
   },
 
+  /* COMPANY CALENDAR shown at the top of the page. Set show:false to hide it.
+     • src     = the calendar's ID (from your share link)
+     • mode    = 'MONTH', 'WEEK', or 'AGENDA' (list view)
+     • height  = pixel height of the embed
+     • viewUrl = the "Open in Google Calendar" button link */
+  calendar: {
+    show:    true,
+    title:   'Company Calendar',
+    src:     'c_qma7v98ietgu4q12bk3vabpjh8@group.calendar.google.com',
+    tz:      'America/Los_Angeles',
+    mode:    'MONTH',
+    height:  600,
+    viewUrl: 'https://calendar.google.com/calendar/u/0?cid=Y19xbWE3djk4aWV0Z3U0cTEyYmszdmFicGpoOEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t'
+  },
+
   /* QUICK LINKS row — icon = any emoji/letter; sub = optional caption */
   quickLinks: [
     { icon:'⚗',  label:'SDS Lookup',          sub:'Safety data sheets',href:'#', ext:true },
@@ -394,6 +419,29 @@ const CONFIG = {
       `<div class="announce-card reveal">
          <span class="badge">${esc(a.badge||'Notice')}</span>
          <div class="body"><strong>${esc(a.title||'')}</strong><span>${esc(a.text||'')}</span></div>
+       </div>`;
+  }
+
+  /* company calendar embed */
+  const cal = CONFIG.calendar;
+  if(cal && cal.show && cal.src){
+    const params = new URLSearchParams({
+      src:   cal.src,
+      ctz:   cal.tz || 'America/Los_Angeles',
+      mode:  (cal.mode || 'MONTH').toUpperCase(),
+      showTitle:'0', showPrint:'0', showCalendars:'0', showTz:'0',
+      wkst:'1', bgcolor:'#ffffff'
+    });
+    const embed = 'https://calendar.google.com/calendar/embed?' + params.toString();
+    const view  = cal.viewUrl || ('https://calendar.google.com/calendar/u/0?cid=' + btoa(cal.src));
+    document.getElementById('cal-mount').innerHTML =
+      `<div class="section-head">
+         <span class="num">01</span>
+         <h2 class="serif">${esc(cal.title||'Calendar')}</h2>
+         <span class="snap-meta"><a href="${esc(view)}" target="_blank" rel="noopener">Open in Google Calendar ↗</a></span>
+       </div>
+       <div class="cal-card reveal">
+         <iframe src="${esc(embed)}" width="100%" height="${parseInt(cal.height,10)||600}" frameborder="0" scrolling="no" title="${esc(cal.title||'Calendar')}"></iframe>
        </div>`;
   }
 
