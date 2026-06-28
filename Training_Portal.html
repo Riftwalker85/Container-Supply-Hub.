@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Container Supply — Training Portal</title>
 <link rel="icon" type="image/png" href="csc-mark.png">
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-
 <style>
 /* ===============================================================
    THEME TOKENS — matched to the Container Supply Info Hub.
@@ -203,6 +201,11 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
   .who{display:none}
 }
 @media(prefers-reduced-motion:reduce){.reveal{animation:none}}
+
+/* language toggle */
+.langtog{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.langtog .lt{appearance:none;border:none;background:var(--surface);font:inherit;font-size:.8rem;font-weight:700;color:var(--muted);padding:6px 12px;cursor:pointer}
+.langtog .lt.on{background:var(--royal);color:#fff}
 </style>
 </head>
 <body>
@@ -211,21 +214,17 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
   <div class="topbar-inner">
     <div class="brand">
       <img class="mark" src="csc-mark.png" alt="Container Supply" onerror="this.style.display='none'">
-      <div class="wordmark">
-        <div class="co">Container Supply</div>
-        <div class="hub">Training Portal</div>
-      </div>
+      <div class="wordmark"><div class="co">Container Supply</div><div class="hub">Training Portal</div></div>
     </div>
     <div class="topbar-actions">
+      <span class="langtog" id="langtog"></span>
       <span class="who" id="who"></span>
-      <a class="btn-ghost" href="index.html">← Back to Hub</a>
+      <a class="btn-ghost" href="index.html">← Hub</a>
     </div>
   </div>
 </header>
 
-<nav class="tabbar">
-  <div class="tabbar-inner" id="tabs" role="tablist"></div>
-</nav>
+<nav class="tabbar"><div class="tabbar-inner" id="tabs" role="tablist"></div></nav>
 
 <main>
   <section class="view active" id="view-matrix"></section>
@@ -237,23 +236,19 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
 
 <footer>
   <div class="footer-inner">
-    <div class="footer-brand">
-      <img src="csc-mark-white.png" alt="Container Supply" onerror="this.style.display='none'">
-      <span class="ftxt">Container Supply Co.</span>
-    </div>
+    <div class="footer-brand"><img src="csc-mark-white.png" alt="Container Supply" onerror="this.style.display='none'"><span class="ftxt">Container Supply Co.</span></div>
     <div>Internal use only • Garden Grove, CA • Training records retained per SQF requirements</div>
   </div>
 </footer>
 
-<!-- identity modal -->
 <div class="modal-bg" id="id-modal">
   <div class="modal">
-    <h3>Before you begin</h3>
-    <p>Enter your name so your test attempts are recorded under the right person.</p>
-    <label for="id-name">Full name</label>
-    <input id="id-name" type="text" placeholder="e.g., Jordan Rivera" autocomplete="name">
-    <label for="id-num">Employee ID <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-    <input id="id-num" type="text" placeholder="e.g., 1042" autocomplete="off">
+    <h3 id="idm-title">Before you begin</h3>
+    <p id="idm-sub">Enter your name so your test attempts are recorded under the right person.</p>
+    <label id="idm-name-label" for="id-name">Full name</label>
+    <input id="id-name" type="text" autocomplete="name">
+    <label id="idm-id-label" for="id-num">Employee ID</label>
+    <input id="id-num" type="text" autocomplete="off">
     <div class="row">
       <button class="btn secondary" id="id-cancel">Cancel</button>
       <button class="btn" id="id-save">Save &amp; continue</button>
@@ -262,971 +257,1217 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
 </div>
 
 <script>
-/* ===================================================================
-   ███  EDIT EVERYTHING IN CONFIG — THIS IS THE PART YOU MANAGE  ███
-   -------------------------------------------------------------------
-   ADD A TRAINING: copy one { ... } block in `trainings` and edit it.
-     id            a short unique slug (letters/numbers/dashes), e.g. 'gmp-basics'
-     title         the training name
-     category      grouping label shown as a chip
-     required      array of roles that must complete it (must match names in `roles`)
-     recurrence    'Once' | 'Monthly' | 'Quarterly' | 'Annual' | 'Biennial'
-     passingScore  percent needed to pass (e.g., 80)
-     video         an EMBED url (YouTube 'embed' link or Google Drive 'preview' link). Leave '' until you have it.
-     description   one or two sentences
-     questions     list of { q, options:[...], answer: <index of correct option, 0-based> }
-
-   ADD A ROLE: add it to `roles` (it becomes a new matrix column automatically).
-   ADD AN EMPLOYEE (optional, powers the Completion Status tab):
-     add to `employees`: { name:'…', id:'…', role:'<one of roles>' }
-
-   RECORDS: every test attempt is saved. To keep central records that all
-   computers share, deploy the companion Apps Script (see the .gs file) and
-   paste its /exec web-app URL into records.endpoint below. If left blank, the
-   portal still works but saves attempts only in the current browser.
-   =================================================================== */
 
 const CONFIG = {
-
-  records: {
-    endpoint: '',          // <-- paste your Apps Script /exec URL here (see training-portal-apps-script.gs)
-    defaultPassingScore: 80 // % needed to pass when a training doesn't set its own
-  },
+  /* Paste your deployed Apps Script /exec URL here so tests are graded and
+     recorded centrally. Until this is set, tests cannot be graded (the answer
+     key now lives only in the Apps Script, not in this page). */
+  records: { endpoint: '', defaultPassingScore: 80 },
 
   // Roles = job titles from the Title column of FRM-025-003 Training Matrix.
   roles: ["Acctng-ActngClerk", "Electrical", "HmnRsrce-Director", "MtlDec-Foreman", "MtlDec-CtrOpr.trn", "MtlDec-Supervisor", "MtlDec-LiftDriver", "MtlDec-Utility", "MachShp-Mech.", "MtlDec-Presmn Trn", "MachShp-Mach.", "MachShp-Supervisor", "MachShop Trainee", "Metal-Supervisor", "Mtl-Bodymaker Op", "Metal-Press Opr.", "Janitor/Co-Wide", "Mtl-Utility", "Metal Sltr Bdymkr", "Metal-Line Opr.", "Mtl-Inv Control", "Metals-Foreman", "Metal-Foreman", "Palletizer", "Metal-Lead Man", "PlsDec-Pring Op", "Plastic-Packer", "PlsDec-LeadMan", "Pls-MntTechnician", "Plastic-CleanUp", "Pls-Set-Up Man", "Pls-SetUp/FKLFT", "Plastic-Leadman", "Plastic-Foreman", "Plastic Supervisor", "Maintenance Foreman", "Metal Press Mech", "Metal-Slit.Mech.", "Purchasing Manager", "President", "Chief Financial Officer", "QA-Trainee", "QA-Technical Dir.", "S&R-TrkDriver", "S&R-WareHouse", "S&R-WRHSE/TRKDRVR", "S&R-Foreman", "Logistics Manager", "Sales-Sales Rep.", "Sales/Mktg. Dir.", "Metal-CoilLineOpr"],
 
-  // Optional roster — powers the "Completion Status" tab. Add staff as { name, id, role } (role must match a title in `roles`).
-  // Left empty on purpose: this page is public on GitHub Pages, so employee names/IDs are NOT embedded here.
-  // Populate it only if you move the portal behind a company login.
+  // Optional roster for the Completion Status tab: { name, id, role }. Empty by
+  // default because this page is public on GitHub Pages (no employee PII embedded).
   employees: [],
 
   trainings:
-  [
-    {
-      "id": "gmp",
-      "title": "GMP (including Personal Hygiene)",
-      "category": "Quality & Food Safety",
-      "required": "ALL",
-      "recurrence": "Annual",
-      "passingScore": 80,
-      "video": "",
-      "description": "Good Manufacturing Practices that keep our cans and containers safe for food contact: personal hygiene, foreign-material control, plant and grounds, and employee conduct (PRO-009-000).",
-      "questions": [
-        {
-          "q": "According to PRO-009-000, who holds the primary responsibility for ensuring that cGMPs are implemented and maintained at Container Supply Co.?",
-          "options": [
-            "The SQF Practitioner",
-            "The Quality Manager",
-            "Senior Management",
-            "All employees equally"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "If an employee has an open wound, boil, or sore that could contaminate food-contact packaging, they must:",
-          "options": [
-            "Use additional gloves and continue working",
-            "Apply a bandage and continue their shift without reporting it",
-            "Report to their supervisor and be excluded from operations until the condition is corrected",
-            "Work only in the warehouse, away from active production"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Under PRO-009-000, which statement BEST describes an employee's reporting obligations?",
-          "options": [
-            "Employees should report GMP violations only if they directly cause a safety incident",
-            "Reporting is required only for health-related concerns such as illness or injury",
-            "Employees are required to immediately report any health concern, GMP violation, unsafe condition, or contamination risk to their supervisor",
-            "An employee who observes but does not report a known GMP violation is not personally responsible for the violation"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Which of the following correctly lists the 5-Step Handwashing procedure required at Container Supply Co.?",
-          "options": [
-            "Wet hands, apply soap, rinse, dry, sanitize",
-            "Apply soap, scrub 10 seconds, rinse, sanitize, dry",
-            "Rinse with water, lather with soap, scrub for 20 seconds, rinse hands, dry with single-service towel",
-            "Rinse, scrub 10 seconds, soap, rinse, air dry"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Which of the following IS permitted for employees working in the production or warehouse area?",
-          "options": [
-            "Earrings and small rings under gloves",
-            "Cologne or light perfume",
-            "Rubber or slip-resistant closed-toe shoes",
-            "False fingernails without nail polish"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Under 21 CFR §117.20 (Plant and Grounds), which of the following is required for proper grounds maintenance?",
-          "options": [
-            "Installing perimeter CCTV surveillance at all entry points",
-            "Painting all exterior structures annually to prevent corrosion",
-            "Requiring all contractors to park in designated zones only",
-            "Removing litter, cutting weeds, and eliminating conditions that provide pest harborage"
-          ],
-          "answer": 3
-        },
-        {
-          "q": "At Container Supply Co., rubbish and waste must be picked up at a minimum of how often?",
-          "options": [
-            "Daily",
-            "Every three days",
-            "Once per week",
-            "Twice per month"
-          ],
-          "answer": 0,
-          "verify": true
-        },
-        {
-          "q": "Regarding cleaning chemicals and toxic materials in the facility, which statement is CORRECT?",
-          "options": [
-            "Any commercially available EPA-registered cleaning product may be used on-site",
-            "Only chemicals required for sanitation, lab testing, maintenance, and plant operations may be used or stored in the facility",
-            "Toxic chemicals may be stored anywhere in the plant as long as they are properly labeled",
-            "Pest control chemicals may be applied by any trained production employee"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "Under 21 CFR §117.93 (Warehousing and Distribution), storage and transportation of food must protect against:",
-          "options": [
-            "Physical contamination from pallets and racking only",
-            "Biological and chemical contamination only",
-            "Temperature abuse and moisture exposure only",
-            "Biological, chemical, physical, and radiological contamination — and against deterioration of the product and container"
-          ],
-          "answer": 3
-        },
-        {
-          "q": "Beard nets are mandatory at Container Supply Co. for employees with facial hair exceeding:",
-          "options": [
-            "¼ inch",
-            "½ inch",
-            "Beard nets are optional — they are a recommended practice only",
-            "⅛ inch"
-          ],
-          "answer": 3,
-          "verify": true
-        }
-      ]
-    },
-    {
-      "id": "product-defense",
-      "title": "Product Defense and Fraud in Manufacturing",
-      "category": "Safety & Compliance",
-      "required": "ALL",
-      "recurrence": "Annual",
-      "passingScore": 80,
-      "video": "",
-      "description": "Protecting product from intentional tampering, sabotage, and fraud: insider threats, site security, supplier conformance, and how to report a concern.",
-      "questions": [
-        {
-          "q": "What is the PRIMARY difference between Product Defense and Product Safety?",
-          "options": [
-            "Product Defense addresses accidental contamination; Product Safety addresses intentional tampering.",
-            "Product Defense addresses intentional tampering or sabotage; Product Safety addresses accidental contamination.",
-            "Product Defense applies only to metal cans; Product Safety applies only to plastic containers.",
-            "There is no difference — they are the same program."
-          ],
-          "answer": 1
-        },
-        {
-          "q": "Which SQF Edition 9 module covers Site Security (Product Defense)?",
-          "options": [
-            "Module 11.2",
-            "Module 13.2",
-            "Module 2.9",
-            "Module 5.4"
-          ],
-          "answer": 1,
-          "verify": true
-        },
-        {
-          "q": "According to the training, which group is statistically the MOST COMMON source of intentional product tampering?",
-          "options": [
-            "External hackers targeting IT systems",
-            "Disgruntled or coerced employees (insider threats)",
-            "Competitors attempting sabotage",
-            "Delivery drivers with unauthorized access"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "You are working on the production floor and notice a tool mark on a 3-piece metal can that is inconsistent with normal processing. What should you do FIRST?",
-          "options": [
-            "Try to fix the mark yourself before it causes a delay",
-            "Set it aside and continue production — it is probably nothing",
-            "Stop, do not touch it, and report it to your supervisor immediately",
-            "Throw it away and pull a replacement from inventory"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Which of the following is an example of Fraud in Manufacturing?",
-          "options": [
-            "A conveyor belt malfunction that causes containers to fall on the floor",
-            "A supplier quietly substituting a non-food-grade resin for approved virgin HDPE",
-            "A production worker accidentally mislabeling a single container",
-            "A power outage that disrupts the production line"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "What does a Certificate of Conformance (CoC) verify?",
-          "options": [
-            "That a supplier has been in business for at least 10 years",
-            "That an incoming material lot meets the required specifications",
-            "That a finished product has been approved for shipment by the customer",
-            "That an employee has completed their annual safety training"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "A coworker tells you to \"just use\" a bag of resin that has no label or QC release sticker because production is running behind. What should you do?",
-          "options": [
-            "Use it — your supervisor would not ask if it were not safe",
-            "Use half of it and report the rest",
-            "Refuse to use it and report the instruction to your supervisor or the Quality/Compliance Manager",
-            "Mix it with approved material so it is diluted"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Under the Container Supply Product Defense program, which of the following is YOUR personal responsibility regarding facility access?",
-          "options": [
-            "Allow coworkers to tailgate through secured doors to save time",
-            "Never prop open a secured door without authorization",
-            "Let contractors move freely without an escort to avoid interrupting your work",
-            "Disable a door alarm if it keeps going off during your shift"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "If you observe a potential fraud or tampering concern and your direct supervisor is unavailable, who should you contact?",
-          "options": [
-            "No one — wait until your supervisor returns",
-            "A coworker in the same department",
-            "The Quality or Compliance Manager directly",
-            "The customer whose product is affected"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Which statement about reporting a concern is TRUE?",
-          "options": [
-            "You must be 100% certain before reporting — do not report unless you have proof",
-            "Reporting a concern in good faith is always protected — you will not face retaliation",
-            "Reports should only be made at the end of the shift to avoid disrupting production",
-            "Only Quality Department employees are authorized to report fraud concerns"
-          ],
-          "answer": 1
-        }
-      ]
-    },
-    {
-      "id": "bloodborne",
-      "title": "Bloodborne Pathogen",
-      "category": "Safety & Compliance",
-      "required": "ALL",
-      "recurrence": "Annual",
-      "passingScore": 80,
-      "video": "",
-      "description": "Managing exposure to blood and bodily fluids to protect product and people: incident response, decontamination, biohazard handling, and required reporting (PRO-035-000).",
-      "questions": [
-        {
-          "q": "According to PRO-035-000, what is the PRIMARY purpose of the Bloodborne Pathogen program at Container Supply Co.?",
-          "options": [
-            "To ensure injured employees receive prompt first aid treatment",
-            "To eliminate product safety risk to customers and consumers by managing exposure to blood and bodily fluids",
-            "To comply with OSHA bloodborne pathogen standards for healthcare workers",
-            "To document all workplace injuries and near-misses for regulatory reporting"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "When a blood or bodily fluid incident occurs on the production floor, what is the FIRST action an employee must take?",
-          "options": [
-            "Locate the Blood Spill Clean-Up Kit and begin cleaning immediately",
-            "Notify the SQF Practitioner and wait for their arrival before doing anything",
-            "Stop ALL activities and traffic in the affected area immediately",
-            "Move nearby products to temporary storage before anything else"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Under PRO-035-000, products and packaging material found WITHIN the affected (contaminated) area must be:",
-          "options": [
-            "Moved to temporary storage until the area is cleaned",
-            "Immediately returned to production after a visual inspection",
-            "Placed on hold per PRO-012-000 Non-Conforming Product Management, or immediately destroyed following proper biohazard requirements",
-            "Tagged and stored in the warehouse pending a supervisor review"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Which of the following is NOT a required item in the Blood Spill Clean-Up Kit per PRO-035-000?",
-          "options": [
-            "Pre-moistened germicidal cloth",
-            "Latex gloves and absorbent towels",
-            "A disposable Tyvek coverall suit",
-            "Bio-hazard bag and plastic scoop"
-          ],
-          "answer": 2,
-          "verify": true
-        },
-        {
-          "q": "When decontaminating a large or porous surface that has been exposed to blood, the correct bleach-to-water ratio is:",
-          "options": [
-            "No less than 1 part bleach to 5 parts water (1:5)",
-            "No less than 1 part bleach to 10 parts water (1:10)",
-            "No less than 1 part bleach to 20 parts water (1:20)",
-            "Any dilution, as long as an EPA-registered germicide is used"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "An employee's clothing has been penetrated by blood during an incident. According to PRO-035-000, the employee must:",
-          "options": [
-            "Continue working and change clothes at the end of the shift",
-            "Apply an impermeable apron over the contaminated garment and finish the task",
-            "Remove the garment immediately, collect it in a biohazard bag, and have it laundered separately — informing laundry services it is contaminated",
-            "Rinse the garment with the bleach solution used on the work surface"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "After completing the decontamination of a blood spill, who is responsible for inspecting the area before it can be returned to production use?",
-          "options": [
-            "The department supervisor",
-            "The employee who performed the cleanup",
-            "Any trained production lead on duty",
-            "The SQF Practitioner or their designee"
-          ],
-          "answer": 3
-        },
-        {
-          "q": "Contaminated sharps and regulated waste must be placed in containers that are:",
-          "options": [
-            "Sealed plastic bags labeled with the employee's name and date",
-            "Closable, leak-proof, puncture-resistant, and appropriately labeled or red-colored",
-            "Standard corrugated cardboard boxes with a biohazard sticker",
-            "Any rigid container, provided it is sealed before disposal"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "Which of the following documents must be completed and kept on file for EVERY blood or bodily fluid incident at Container Supply Co.?",
-          "options": [
-            "PRO-012-000 Non-Conforming Product Hold Tag",
-            "PRO-017-000 Corrective and Preventive Action (CAPA) Report",
-            "FRM-035-001 Blood Exposure Event Report",
-            "An OSHA 300 Log entry"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Which of the following BEST explains why the Bloodborne Pathogen program at Container Supply Co. is a requirement under SQF Edition 9?",
-          "options": [
-            "SQF Edition 9 requires all food packaging facilities to maintain an OSHA-compliant bloodborne pathogen exposure control plan",
-            "Bloodborne pathogen control is a recognized prerequisite program; biological hazards must be identified and controlled under the product safety plan, and incidents require documented corrective actions",
-            "SQF Edition 9 Module 13 requires a minimum of two blood spill kits per 10,000 sq. ft. of production space",
-            "SQF certification requires all employees to hold a current first aid and CPR certification"
-          ],
-          "answer": 1
-        }
-      ]
-    },
-    {
-      "id": "forklift",
-      "title": "Forklift Safety and Operation",
-      "category": "Safety & Compliance",
-      "required": [
-        "Electrical",
-        "MtlDec-Foreman",
-        "MtlDec-CtrOpr.trn",
-        "MtlDec-Supervisor",
-        "MtlDec-LiftDriver",
-        "MtlDec-Utility",
-        "MachShp-Mech.",
-        "MtlDec-Presmn Trn",
-        "MachShp-Mach.",
-        "MachShp-Supervisor",
-        "MachShop Trainee",
-        "Metal-Supervisor",
-        "Mtl-Bodymaker Op",
-        "Metal-Press Opr.",
-        "Mtl-Utility",
-        "Metal Sltr Bdymkr",
-        "Mtl-Inv Control",
-        "Metals-Foreman",
-        "Metal-Foreman",
-        "Metal-Lead Man",
-        "PlsDec-Pring Op",
-        "Plastic-Packer",
-        "PlsDec-LeadMan",
-        "Pls-MntTechnician",
-        "Pls-Set-Up Man",
-        "Pls-SetUp/FKLFT",
-        "Plastic-Leadman",
-        "Plastic-Foreman",
-        "Plastic Supervisor",
-        "Maintenance Foreman",
-        "Metal Press Mech",
-        "QA-Trainee",
-        "QA-Technical Dir.",
-        "S&R-TrkDriver",
-        "S&R-WareHouse",
-        "S&R-WRHSE/TRKDRVR",
-        "S&R-Foreman",
-        "Logistics Manager",
-        "Metal-CoilLineOpr"
-      ],
-      "recurrence": "Triennial",
-      "passingScore": 80,
-      "video": "",
-      "description": "Safe powered-industrial-truck operation under OSHA 29 CFR 1910.178: authorization, pre-operation inspection, propane handling, travel and pedestrian rules, load handling, and refresher requirements.",
-      "questions": [
-        {
-          "q": "Under OSHA 29 CFR 1910.178, which of the following is required BEFORE an employee may operate a forklift unsupervised at Container Supply Co.?",
-          "options": [
-            "Completing an online safety video only",
-            "Receiving verbal authorization from a coworker who is already certified",
-            "Completing both a classroom/video training component and a hands-on practical evaluation on the specific equipment type",
-            "Holding a valid driver's license and completing one week of supervised operation"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "A pre-operation inspection must be completed:",
-          "options": [
-            "Once per week by the lead operator on each shift",
-            "Only when a forklift returns from maintenance",
-            "Before every shift, by the operator who will be using the forklift",
-            "At the beginning of each month as part of a documented safety audit"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "During your pre-operation inspection, you discover the parking brake does not hold properly. You must:",
-          "options": [
-            "Use extra caution and operate the forklift slowly until it can be repaired at shift end",
-            "Tag the forklift out of service and report the defect to your supervisor before operating",
-            "Operate the forklift in flat areas only until the brake is fixed",
-            "Ask a coworker to verify the issue and get their approval to continue using it"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "When exchanging a propane tank, which of the following is CORRECT?",
-          "options": [
-            "You may swap the tank indoors as long as the area is well ventilated",
-            "Wear gloves, close the service valve before disconnecting, and inspect the new tank for damage before mounting",
-            "Open the service valve fully before connecting the tank to purge any air from the line",
-            "Leave the engine running to maintain system pressure during the tank exchange"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "Because forklifts at Container Supply Co. do not have speedometers, how should operators judge their travel speed in open interior areas?",
-          "options": [
-            "Match the pace of other forklifts already moving in the same aisle",
-            "Travel at roughly 2 to 3 times a normal walking pace, and slow to a single walking pace at all intersections, doorways, and blind spots",
-            "Move as quickly as needed to stay efficient, stopping only when a pedestrian is directly in the path",
-            "Maintain a slow creeping pace at all times regardless of location"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "You are approaching a blind intersection in the warehouse. The correct action is to:",
-          "options": [
-            "Flash your headlights and proceed slowly",
-            "Stop completely and wait for another employee to act as a spotter",
-            "Sound your horn and slow to a walking pace before entering the intersection",
-            "Speed up slightly to clear the intersection quickly and reduce exposure time"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "Which of the following statements about load handling is CORRECT?",
-          "options": [
-            "It is acceptable to carry a load elevated if you are traveling slowly",
-            "You may exceed the rated load capacity by up to 10% if the load is evenly distributed",
-            "Forks should be 6–8 inches off the ground and tilted back during all travel",
-            "Loads should be set down quickly to reduce the time forks are elevated"
-          ],
-          "answer": 2
-        },
-        {
-          "q": "A pedestrian is standing near your planned travel path. You must:",
-          "options": [
-            "Sound your horn and continue at reduced speed — pedestrians are responsible for yielding to forklifts in work zones",
-            "Stop and wait for the pedestrian to clear the area before proceeding",
-            "Steer around the pedestrian, keeping at least 2 feet of clearance",
-            "Flash your lights and sound two short horn blasts to signal them to move"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "When parking a forklift at the end of your shift, which of the following steps is REQUIRED?",
-          "options": [
-            "Leave the forks in the travel position (6–8 inches off the ground) to save time at the start of the next shift",
-            "Lower forks to the floor, apply the parking brake, turn off the engine, and remove the key",
-            "Park in the nearest available open space and leave the key in the ignition for the next operator",
-            "Lower forks, set the throttle to idle, and leave the engine running to warm up for the next shift"
-          ],
-          "answer": 1
-        },
-        {
-          "q": "Refresher forklift training is required after which of the following events?",
-          "options": [
-            "An operator is observed operating the forklift safely and efficiently for 30 consecutive days",
-            "An operator completes their third year without any reported incidents",
-            "An operator is involved in a near-miss, accident, or observed unsafe operation, or is assigned to a different type of forklift",
-            "An operator requests a pay raise or promotion to a lead position"
-          ],
-          "answer": 2
-        }
-      ]
-    }
-  ]
+    [
+      {
+        "id": "gmp",
+        "title": "GMP (including Personal Hygiene)",
+        "category": "Quality & Food Safety",
+        "required": "ALL",
+        "recurrence": "Annual",
+        "passingScore": 80,
+        "video": "",
+        "description": "Good Manufacturing Practices that keep our cans and containers safe for food contact: personal hygiene, foreign-material control, plant and grounds, and employee conduct (PRO-009-000).",
+        "questions": [
+          {
+            "q": {
+              "en": "According to PRO-009-000, who holds the primary responsibility for ensuring that cGMPs are implemented and maintained at Container Supply Co.?",
+              "es": "Según PRO-009-000, ¿quién es el principal responsable de garantizar que las cGMP sean implementadas y mantenidas en Container Supply Co.?"
+            },
+            "options": {
+              "en": [
+                "The SQF Practitioner",
+                "The Quality Manager",
+                "Senior Management",
+                "All employees equally"
+              ],
+              "es": [
+                "El Practicante SQF",
+                "El Gerente de Calidad",
+                "La Alta Dirección",
+                "Todos los empleados por igual"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "If an employee has an open wound, boil, or sore that could contaminate food-contact packaging, they must:",
+              "es": "Si un empleado tiene una herida abierta, furúnculo o llaga que podría contaminar el empaque en contacto con alimentos, debe:"
+            },
+            "options": {
+              "en": [
+                "Use additional gloves and continue working",
+                "Apply a bandage and continue their shift without reporting it",
+                "Report to their supervisor and be excluded from operations until the condition is corrected",
+                "Work only in the warehouse, away from active production"
+              ],
+              "es": [
+                "Usar guantes adicionales y continuar trabajando",
+                "Aplicar un vendaje y continuar su turno sin reportarlo",
+                "Reportar a su supervisor y ser excluido de las operaciones hasta que la condición sea corregida",
+                "Trabajar solo en el almacén, lejos de la producción activa"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Under PRO-009-000, which statement BEST describes an employee's reporting obligations?",
+              "es": "Según PRO-009-000, ¿qué enunciado describe MEJOR las obligaciones de reporte de un empleado?"
+            },
+            "options": {
+              "en": [
+                "Employees should report GMP violations only if they directly cause a safety incident",
+                "Reporting is required only for health-related concerns such as illness or injury",
+                "Employees are required to immediately report any health concern, GMP violation, unsafe condition, or contamination risk to their supervisor",
+                "An employee who observes but does not report a known GMP violation is not personally responsible for the violation"
+              ],
+              "es": [
+                "Los empleados deben reportar las violaciones a las BPM solo si directamente causan un incidente de seguridad",
+                "El reporte es requerido únicamente para asuntos relacionados con la salud, como enfermedades o lesiones",
+                "Los empleados están obligados a reportar de inmediato cualquier problema de salud, violación a las BPM, condición insegura o riesgo de contaminación a su supervisor",
+                "Un empleado que observa pero no reporta una violación conocida a las BPM no es personalmente responsable de la violación"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Which of the following correctly lists the 5-Step Handwashing procedure required at Container Supply Co.?",
+              "es": "¿Cuál de las siguientes opciones describe correctamente el procedimiento de lavado de manos de 5 pasos requerido en Container Supply Co.?"
+            },
+            "options": {
+              "en": [
+                "Wet hands, apply soap, rinse, dry, sanitize",
+                "Apply soap, scrub 10 seconds, rinse, sanitize, dry",
+                "Rinse with water, lather with soap, scrub for 20 seconds, rinse hands, dry with single-service towel",
+                "Rinse, scrub 10 seconds, soap, rinse, air dry"
+              ],
+              "es": [
+                "Mojarse las manos, aplicar jabón, enjuagar, secar, sanitizar",
+                "Aplicar jabón, tallar 10 segundos, enjuagar, sanitizar, secar",
+                "Enjuagar con agua, enjabonar, tallar por 20 segundos, enjuagar las manos, secar con toalla de uso único",
+                "Enjuagar, tallar 10 segundos, jabón, enjuagar, secar al aire"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Which of the following IS permitted for employees working in the production or warehouse area?",
+              "es": "¿Cuál de los siguientes artículos está PERMITIDO para los empleados que trabajan en el área de producción o almacén?"
+            },
+            "options": {
+              "en": [
+                "Earrings and small rings under gloves",
+                "Cologne or light perfume",
+                "Rubber or slip-resistant closed-toe shoes",
+                "False fingernails without nail polish"
+              ],
+              "es": [
+                "Aretes y anillos pequeños debajo de los guantes",
+                "Colonia o perfume suave",
+                "Zapatos de puntera cerrada, de hule o antideslizantes",
+                "Uñas postizas sin esmalte"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Under 21 CFR §117.20 (Plant and Grounds), which of the following is required for proper grounds maintenance?",
+              "es": "Según 21 CFR §117.20 (Planta y Terrenos), ¿cuál de las siguientes es una práctica requerida de mantenimiento de terrenos?"
+            },
+            "options": {
+              "en": [
+                "Installing perimeter CCTV surveillance at all entry points",
+                "Painting all exterior structures annually to prevent corrosion",
+                "Requiring all contractors to park in designated zones only",
+                "Removing litter, cutting weeds, and eliminating conditions that provide pest harborage"
+              ],
+              "es": [
+                "Instalar videovigilancia perimetral en todos los puntos de acceso",
+                "Pintar todas las estructuras exteriores anualmente para prevenir la corrosión",
+                "Exigir a todos los contratistas que estacionen únicamente en zonas designadas",
+                "Retirar basura, cortar maleza y eliminar condiciones que proporcionen refugio a plagas"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "At Container Supply Co., rubbish and waste must be picked up at a minimum of how often?",
+              "es": "En Container Supply Co., ¿con qué frecuencia mínima deben recogerse los desechos y la basura?"
+            },
+            "options": {
+              "en": [
+                "Daily",
+                "Every three days",
+                "Once per week",
+                "Twice per month"
+              ],
+              "es": [
+                "Diariamente",
+                "Cada tres días",
+                "Una vez por semana",
+                "Dos veces al mes"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Regarding cleaning chemicals and toxic materials in the facility, which statement is CORRECT?",
+              "es": "En cuanto a los productos químicos de limpieza y materiales tóxicos en las instalaciones, ¿qué enunciado es CORRECTO?"
+            },
+            "options": {
+              "en": [
+                "Any commercially available EPA-registered cleaning product may be used on-site",
+                "Only chemicals required for sanitation, lab testing, maintenance, and plant operations may be used or stored in the facility",
+                "Toxic chemicals may be stored anywhere in the plant as long as they are properly labeled",
+                "Pest control chemicals may be applied by any trained production employee"
+              ],
+              "es": [
+                "Cualquier producto de limpieza registrado ante la EPA disponible comercialmente puede usarse en las instalaciones",
+                "Solo los productos químicos requeridos para saneamiento, pruebas de laboratorio, mantenimiento y operaciones de la planta pueden usarse o almacenarse en las instalaciones",
+                "Los productos químicos tóxicos pueden almacenarse en cualquier lugar de la planta siempre que estén debidamente etiquetados",
+                "Los productos químicos para control de plagas pueden ser aplicados por cualquier empleado de producción capacitado"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Under 21 CFR §117.93 (Warehousing and Distribution), storage and transportation of food must protect against:",
+              "es": "Según 21 CFR §117.93 (Almacenamiento y Distribución), el almacenamiento y transporte de alimentos debe proteger contra:"
+            },
+            "options": {
+              "en": [
+                "Physical contamination from pallets and racking only",
+                "Biological and chemical contamination only",
+                "Temperature abuse and moisture exposure only",
+                "Biological, chemical, physical, and radiological contamination — and against deterioration of the product and container"
+              ],
+              "es": [
+                "Contaminación física proveniente de tarimas y estantes únicamente",
+                "Contaminación biológica y química únicamente",
+                "Abuso de temperatura y exposición a la humedad únicamente",
+                "Contaminación biológica, química, física y radiológica — y contra el deterioro del producto y el envase"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Beard nets are mandatory at Container Supply Co. for employees with facial hair exceeding:",
+              "es": "Las redecillas para barba son obligatorias en Container Supply Co. para empleados con vello facial que exceda:"
+            },
+            "options": {
+              "en": [
+                "¼ inch",
+                "½ inch",
+                "Beard nets are optional — they are a recommended practice only",
+                "⅛ inch"
+              ],
+              "es": [
+                "¼ de pulgada",
+                "½ pulgada",
+                "Las redecillas para barba son opcionales — solo son una práctica recomendada",
+                "⅛ de pulgada"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "product-defense",
+        "title": "Product Defense and Fraud in Manufacturing",
+        "category": "Safety & Compliance",
+        "required": "ALL",
+        "recurrence": "Annual",
+        "passingScore": 80,
+        "video": "",
+        "description": "Protecting product from intentional tampering, sabotage, and fraud: insider threats, site security, supplier conformance, and how to report a concern.",
+        "questions": [
+          {
+            "q": {
+              "en": "What is the PRIMARY difference between Product Defense and Product Safety?",
+              "es": "¿Cuál es la diferencia PRINCIPAL entre la Defensa del Producto y la Seguridad del Producto?"
+            },
+            "options": {
+              "en": [
+                "Product Defense addresses accidental contamination; Product Safety addresses intentional tampering.",
+                "Product Defense addresses intentional tampering or sabotage; Product Safety addresses accidental contamination.",
+                "Product Defense applies only to metal cans; Product Safety applies only to plastic containers.",
+                "There is no difference — they are the same program."
+              ],
+              "es": [
+                "La Defensa del Producto aborda la contaminación accidental; la Seguridad del Producto aborda la alteración intencional.",
+                "La Defensa del Producto aborda la alteración o sabotaje intencional; la Seguridad del Producto aborda la contaminación accidental.",
+                "La Defensa del Producto aplica solo a latas de metal; la Seguridad del Producto aplica solo a envases plásticos.",
+                "No hay diferencia — son el mismo programa."
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Which SQF Edition 9 module covers Site Security (Product Defense)?",
+              "es": "¿Qué módulo de la SQF Edición 9 cubre la Seguridad del Sitio (Defensa del Producto)?"
+            },
+            "options": {
+              "en": [
+                "Module 11.2",
+                "Module 13.2",
+                "Module 2.9",
+                "Module 5.4"
+              ],
+              "es": [
+                "Módulo 11.2",
+                "Módulo 13.2",
+                "Módulo 2.9",
+                "Módulo 5.4"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "According to the training, which group is statistically the MOST COMMON source of intentional product tampering?",
+              "es": "Según la capacitación, ¿qué grupo es estadísticamente la fuente MÁS COMÚN de alteración intencional de productos?"
+            },
+            "options": {
+              "en": [
+                "External hackers targeting IT systems",
+                "Disgruntled or coerced employees (insider threats)",
+                "Competitors attempting sabotage",
+                "Delivery drivers with unauthorized access"
+              ],
+              "es": [
+                "Piratas informáticos externos que atacan los sistemas de TI",
+                "Empleados descontentos o coaccionados (amenazas internas)",
+                "Competidores que intentan sabotear",
+                "Conductores de entrega con acceso no autorizado"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "You are working on the production floor and notice a tool mark on a 3-piece metal can that is inconsistent with normal processing. What should you do FIRST?",
+              "es": "Está trabajando en el piso de producción y nota una marca de herramienta en una lata de metal de 3 piezas que es inconsistente con el procesamiento normal. ¿Qué debe hacer PRIMERO?"
+            },
+            "options": {
+              "en": [
+                "Try to fix the mark yourself before it causes a delay",
+                "Set it aside and continue production — it is probably nothing",
+                "Stop, do not touch it, and report it to your supervisor immediately",
+                "Throw it away and pull a replacement from inventory"
+              ],
+              "es": [
+                "Intentar arreglar la marca usted mismo antes de que cause un retraso",
+                "Dejarla a un lado y continuar la producción — probablemente no es nada",
+                "Detenerse, no tocarla y reportarla a su supervisor de inmediato",
+                "Desecharla y sacar un reemplazo del inventario"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Which of the following is an example of Fraud in Manufacturing?",
+              "es": "¿Cuál de los siguientes es un ejemplo de Fraude en la Fabricación?"
+            },
+            "options": {
+              "en": [
+                "A conveyor belt malfunction that causes containers to fall on the floor",
+                "A supplier quietly substituting a non-food-grade resin for approved virgin HDPE",
+                "A production worker accidentally mislabeling a single container",
+                "A power outage that disrupts the production line"
+              ],
+              "es": [
+                "Un mal funcionamiento de la banda transportadora que hace que los envases caigan al suelo",
+                "Un proveedor que silenciosamente sustituye una resina no apta para alimentos por HDPE virgen aprobado",
+                "Un trabajador de producción que accidentalmente etiqueta incorrectamente un solo envase",
+                "Un corte de energía que interrumpe la línea de producción"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "What does a Certificate of Conformance (CoC) verify?",
+              "es": "¿Qué verifica un Certificado de Conformidad (CDC)?"
+            },
+            "options": {
+              "en": [
+                "That a supplier has been in business for at least 10 years",
+                "That an incoming material lot meets the required specifications",
+                "That a finished product has been approved for shipment by the customer",
+                "That an employee has completed their annual safety training"
+              ],
+              "es": [
+                "Que un proveedor ha estado en el negocio por al menos 10 años",
+                "Que un lote de material entrante cumple con las especificaciones requeridas",
+                "Que un producto terminado ha sido aprobado para envío por el cliente",
+                "Que un empleado ha completado su capacitación de seguridad anual"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "A coworker tells you to \"just use\" a bag of resin that has no label or QC release sticker because production is running behind. What should you do?",
+              "es": "Un compañero de trabajo le dice que \"simplemente use\" una bolsa de resina que no tiene etiqueta ni calcomanía de liberación de control de calidad porque la producción está atrasada. ¿Qué debe hacer?"
+            },
+            "options": {
+              "en": [
+                "Use it — your supervisor would not ask if it were not safe",
+                "Use half of it and report the rest",
+                "Refuse to use it and report the instruction to your supervisor or the Quality/Compliance Manager",
+                "Mix it with approved material so it is diluted"
+              ],
+              "es": [
+                "Usarla — su supervisor no lo pediría si no fuera seguro",
+                "Usar la mitad y reportar el resto",
+                "Negarse a usarla y reportar la instrucción a su supervisor o al Gerente de Calidad/Cumplimiento",
+                "Mezclarla con material aprobado para que quede diluida"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Under the Container Supply Product Defense program, which of the following is YOUR personal responsibility regarding facility access?",
+              "es": "Bajo el programa de Defensa del Producto de Container Supply, ¿cuál de las siguientes es SU responsabilidad personal con respecto al acceso a las instalaciones?"
+            },
+            "options": {
+              "en": [
+                "Allow coworkers to tailgate through secured doors to save time",
+                "Never prop open a secured door without authorization",
+                "Let contractors move freely without an escort to avoid interrupting your work",
+                "Disable a door alarm if it keeps going off during your shift"
+              ],
+              "es": [
+                "Permitir que los compañeros entren siguiéndole a través de puertas aseguradas para ahorrar tiempo",
+                "Nunca mantener abiertas las puertas aseguradas sin autorización",
+                "Dejar que los contratistas se muevan libremente sin acompañante para no interrumpir su trabajo",
+                "Desactivar una alarma de puerta si sigue sonando durante su turno"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "If you observe a potential fraud or tampering concern and your direct supervisor is unavailable, who should you contact?",
+              "es": "Si observa una posible preocupación de fraude o alteración y su supervisor directo no está disponible, ¿a quién debe contactar?"
+            },
+            "options": {
+              "en": [
+                "No one — wait until your supervisor returns",
+                "A coworker in the same department",
+                "The Quality or Compliance Manager directly",
+                "The customer whose product is affected"
+              ],
+              "es": [
+                "A nadie — espere hasta que su supervisor regrese",
+                "A un compañero de trabajo del mismo departamento",
+                "Directamente al Gerente de Calidad o Cumplimiento",
+                "Al cliente cuyo producto está afectado"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Which statement about reporting a concern is TRUE?",
+              "es": "¿Qué afirmación sobre reportar una preocupación es VERDADERA?"
+            },
+            "options": {
+              "en": [
+                "You must be 100% certain before reporting — do not report unless you have proof",
+                "Reporting a concern in good faith is always protected — you will not face retaliation",
+                "Reports should only be made at the end of the shift to avoid disrupting production",
+                "Only Quality Department employees are authorized to report fraud concerns"
+              ],
+              "es": [
+                "Debe estar 100% seguro antes de reportar — no reporte a menos que tenga pruebas",
+                "Reportar una preocupación de buena fe siempre está protegido — no enfrentará represalias",
+                "Los reportes solo deben hacerse al final del turno para no interrumpir la producción",
+                "Solo los empleados del Departamento de Calidad están autorizados a reportar preocupaciones de fraude"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "bloodborne",
+        "title": "Bloodborne Pathogen",
+        "category": "Safety & Compliance",
+        "required": "ALL",
+        "recurrence": "Annual",
+        "passingScore": 80,
+        "video": "",
+        "description": "Managing exposure to blood and bodily fluids to protect product and people: incident response, decontamination, biohazard handling, and required reporting (PRO-035-000).",
+        "questions": [
+          {
+            "q": {
+              "en": "According to PRO-035-000, what is the PRIMARY purpose of the Bloodborne Pathogen program at Container Supply Co.?",
+              "es": "Según PRO-035-000, ¿cuál es el PROPÓSITO PRINCIPAL del programa de Patógenos de Transmisión Sanguínea en Container Supply Co.?"
+            },
+            "options": {
+              "en": [
+                "To ensure injured employees receive prompt first aid treatment",
+                "To eliminate product safety risk to customers and consumers by managing exposure to blood and bodily fluids",
+                "To comply with OSHA bloodborne pathogen standards for healthcare workers",
+                "To document all workplace injuries and near-misses for regulatory reporting"
+              ],
+              "es": [
+                "Garantizar que los empleados lesionados reciban tratamiento de primeros auxilios de manera oportuna",
+                "Eliminar el riesgo para la inocuidad del producto para clientes y consumidores mediante el manejo de la exposición a sangre y fluidos corporales",
+                "Cumplir con los estándares de patógenos de transmisión sanguínea de OSHA para trabajadores de la salud",
+                "Documentar todas las lesiones en el lugar de trabajo y los cuasi accidentes para informes regulatorios"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "When a blood or bodily fluid incident occurs on the production floor, what is the FIRST action an employee must take?",
+              "es": "Cuando ocurre un incidente de sangre o fluidos corporales en el área de producción, ¿cuál es la PRIMERA acción que debe tomar un empleado?"
+            },
+            "options": {
+              "en": [
+                "Locate the Blood Spill Clean-Up Kit and begin cleaning immediately",
+                "Notify the SQF Practitioner and wait for their arrival before doing anything",
+                "Stop ALL activities and traffic in the affected area immediately",
+                "Move nearby products to temporary storage before anything else"
+              ],
+              "es": [
+                "Localizar el Kit de Limpieza para Derrames de Sangre y comenzar a limpiar de inmediato",
+                "Notificar al Practicante SQF y esperar su llegada antes de hacer cualquier cosa",
+                "Detener TODAS las actividades y el tráfico en el área afectada de inmediato",
+                "Mover los productos cercanos a almacenamiento temporal antes que cualquier otra cosa"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Under PRO-035-000, products and packaging material found WITHIN the affected (contaminated) area must be:",
+              "es": "Según PRO-035-000, los productos y materiales de empaque encontrados DENTRO del área afectada (contaminada) deben:"
+            },
+            "options": {
+              "en": [
+                "Moved to temporary storage until the area is cleaned",
+                "Immediately returned to production after a visual inspection",
+                "Placed on hold per PRO-012-000 Non-Conforming Product Management, or immediately destroyed following proper biohazard requirements",
+                "Tagged and stored in the warehouse pending a supervisor review"
+              ],
+              "es": [
+                "Trasladarse a almacenamiento temporal hasta que se limpie el área",
+                "Devolverse inmediatamente a producción después de una inspección visual",
+                "Colocarse en espera según PRO-012-000 Gestión de Productos No Conformes, o destruirse de inmediato siguiendo los requisitos de residuos peligrosos biológicos",
+                "Etiquetarse y almacenarse en el almacén pendiente de una revisión del supervisor"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Which of the following is NOT a required item in the Blood Spill Clean-Up Kit per PRO-035-000?",
+              "es": "¿Cuál de los siguientes artículos NO es un componente requerido del Kit de Limpieza para Derrames de Sangre según PRO-035-000?"
+            },
+            "options": {
+              "en": [
+                "Pre-moistened germicidal cloth",
+                "Latex gloves and absorbent towels",
+                "A disposable Tyvek coverall suit",
+                "Bio-hazard bag and plastic scoop"
+              ],
+              "es": [
+                "Paño germicida humedecido",
+                "Guantes de látex y toallas absorbentes",
+                "Un traje desechable tipo Tyvek",
+                "Bolsa de residuos peligrosos y pala de plástico"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "When decontaminating a large or porous surface that has been exposed to blood, the correct bleach-to-water ratio is:",
+              "es": "Al descontaminar una superficie grande o porosa expuesta a sangre, la proporción correcta de cloro y agua es:"
+            },
+            "options": {
+              "en": [
+                "No less than 1 part bleach to 5 parts water (1:5)",
+                "No less than 1 part bleach to 10 parts water (1:10)",
+                "No less than 1 part bleach to 20 parts water (1:20)",
+                "Any dilution, as long as an EPA-registered germicide is used"
+              ],
+              "es": [
+                "No menos de 1 parte de cloro por 5 partes de agua (1:5)",
+                "No menos de 1 parte de cloro por 10 partes de agua (1:10)",
+                "No menos de 1 parte de cloro por 20 partes de agua (1:20)",
+                "Cualquier dilución, siempre que se use un germicida registrado ante la EPA"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "An employee's clothing has been penetrated by blood during an incident. According to PRO-035-000, the employee must:",
+              "es": "La ropa de un empleado fue penetrada por sangre durante un incidente. Según PRO-035-000, el empleado debe:"
+            },
+            "options": {
+              "en": [
+                "Continue working and change clothes at the end of the shift",
+                "Apply an impermeable apron over the contaminated garment and finish the task",
+                "Remove the garment immediately, collect it in a biohazard bag, and have it laundered separately — informing laundry services it is contaminated",
+                "Rinse the garment with the bleach solution used on the work surface"
+              ],
+              "es": [
+                "Continuar trabajando y cambiarse la ropa al final del turno",
+                "Colocarse un delantal impermeable sobre la prenda contaminada y terminar la tarea",
+                "Retirarse la prenda de inmediato, colocarla en una bolsa de residuos peligrosos y enviarla a lavar por separado — informando al servicio de lavandería que está contaminada",
+                "Enjuagar la prenda con la solución de cloro utilizada en la superficie de trabajo"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "After completing the decontamination of a blood spill, who is responsible for inspecting the area before it can be returned to production use?",
+              "es": "Después de completar la descontaminación de un derrame de sangre, ¿quién es responsable de inspeccionar el área antes de que pueda volver a usarse para producción?"
+            },
+            "options": {
+              "en": [
+                "The department supervisor",
+                "The employee who performed the cleanup",
+                "Any trained production lead on duty",
+                "The SQF Practitioner or their designee"
+              ],
+              "es": [
+                "El supervisor del departamento",
+                "El empleado que realizó la limpieza",
+                "Cualquier líder de producción capacitado en turno",
+                "El Practicante SQF o su designado"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Contaminated sharps and regulated waste must be placed in containers that are:",
+              "es": "Los objetos cortopunzantes contaminados y los residuos regulados deben colocarse en recipientes que sean:"
+            },
+            "options": {
+              "en": [
+                "Sealed plastic bags labeled with the employee's name and date",
+                "Closable, leak-proof, puncture-resistant, and appropriately labeled or red-colored",
+                "Standard corrugated cardboard boxes with a biohazard sticker",
+                "Any rigid container, provided it is sealed before disposal"
+              ],
+              "es": [
+                "Bolsas plásticas selladas con el nombre del empleado y la fecha",
+                "Cerrados, a prueba de fugas, resistentes a perforaciones, y correctamente etiquetados o de color rojo",
+                "Cajas de cartón corrugado estándar con una calcomanía de peligro biológico",
+                "Cualquier recipiente rígido, siempre que esté sellado antes de su eliminación"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Which of the following documents must be completed and kept on file for EVERY blood or bodily fluid incident at Container Supply Co.?",
+              "es": "¿Cuál de los siguientes documentos debe completarse y conservarse en archivo por CADA incidente de sangre o fluidos corporales en Container Supply Co.?"
+            },
+            "options": {
+              "en": [
+                "PRO-012-000 Non-Conforming Product Hold Tag",
+                "PRO-017-000 Corrective and Preventive Action (CAPA) Report",
+                "FRM-035-001 Blood Exposure Event Report",
+                "An OSHA 300 Log entry"
+              ],
+              "es": [
+                "Etiqueta de Espera de Producto No Conforme PRO-012-000",
+                "Informe de Acción Correctiva y Preventiva (CAPA) PRO-017-000",
+                "FRM-035-001 Informe de Evento de Exposición a Sangre",
+                "Una entrada en el Registro OSHA 300"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Which of the following BEST explains why the Bloodborne Pathogen program at Container Supply Co. is a requirement under SQF Edition 9?",
+              "es": "¿Cuál de las siguientes opciones explica MEJOR por qué el programa de Patógenos de Transmisión Sanguínea en Container Supply Co. es un requisito bajo SQF Edición 9?"
+            },
+            "options": {
+              "en": [
+                "SQF Edition 9 requires all food packaging facilities to maintain an OSHA-compliant bloodborne pathogen exposure control plan",
+                "Bloodborne pathogen control is a recognized prerequisite program; biological hazards must be identified and controlled under the product safety plan, and incidents require documented corrective actions",
+                "SQF Edition 9 Module 13 requires a minimum of two blood spill kits per 10,000 sq. ft. of production space",
+                "SQF certification requires all employees to hold a current first aid and CPR certification"
+              ],
+              "es": [
+                "SQF Edición 9 exige que todas las instalaciones de empaque de alimentos mantengan un plan de control de exposición a patógenos de transmisión sanguínea conforme a OSHA",
+                "El control de patógenos de transmisión sanguínea es un programa prerrequisito reconocido; los peligros biológicos deben identificarse y controlarse dentro del plan de inocuidad del producto, y los incidentes requieren acciones correctivas documentadas",
+                "El Módulo 13 de SQF Edición 9 requiere un mínimo de dos kits de derrames de sangre por cada 10,000 pies cuadrados de espacio de producción",
+                "La certificación SQF exige que todos los empleados cuenten con una certificación vigente de primeros auxilios y RCP"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "forklift",
+        "title": "Forklift Safety and Operation",
+        "category": "Safety & Compliance",
+        "required": [
+          "Electrical",
+          "MtlDec-Foreman",
+          "MtlDec-CtrOpr.trn",
+          "MtlDec-Supervisor",
+          "MtlDec-LiftDriver",
+          "MtlDec-Utility",
+          "MachShp-Mech.",
+          "MtlDec-Presmn Trn",
+          "MachShp-Mach.",
+          "MachShp-Supervisor",
+          "MachShop Trainee",
+          "Metal-Supervisor",
+          "Mtl-Bodymaker Op",
+          "Metal-Press Opr.",
+          "Mtl-Utility",
+          "Metal Sltr Bdymkr",
+          "Mtl-Inv Control",
+          "Metals-Foreman",
+          "Metal-Foreman",
+          "Metal-Lead Man",
+          "PlsDec-Pring Op",
+          "Plastic-Packer",
+          "PlsDec-LeadMan",
+          "Pls-MntTechnician",
+          "Pls-Set-Up Man",
+          "Pls-SetUp/FKLFT",
+          "Plastic-Leadman",
+          "Plastic-Foreman",
+          "Plastic Supervisor",
+          "Maintenance Foreman",
+          "Metal Press Mech",
+          "QA-Trainee",
+          "QA-Technical Dir.",
+          "S&R-TrkDriver",
+          "S&R-WareHouse",
+          "S&R-WRHSE/TRKDRVR",
+          "S&R-Foreman",
+          "Logistics Manager",
+          "Metal-CoilLineOpr"
+        ],
+        "recurrence": "Triennial",
+        "passingScore": 80,
+        "video": "",
+        "description": "Safe powered-industrial-truck operation under OSHA 29 CFR 1910.178: authorization, pre-operation inspection, propane handling, travel and pedestrian rules, load handling, and refresher requirements.",
+        "questions": [
+          {
+            "q": {
+              "en": "Under OSHA 29 CFR 1910.178, which of the following is required BEFORE an employee may operate a forklift unsupervised at Container Supply Co.?",
+              "es": "Según OSHA 29 CFR 1910.178, ¿qué se requiere ANTES de que un empleado pueda operar un montacargas sin supervisión en Container Supply Co.?"
+            },
+            "options": {
+              "en": [
+                "Completing an online safety video only",
+                "Receiving verbal authorization from a coworker who is already certified",
+                "Completing both a classroom/video training component and a hands-on practical evaluation on the specific equipment type",
+                "Holding a valid driver's license and completing one week of supervised operation"
+              ],
+              "es": [
+                "Completar únicamente un video de seguridad en línea",
+                "Recibir autorización verbal de un compañero que ya esté certificado",
+                "Completar tanto un componente de capacitación en aula/video como una evaluación práctica en el tipo específico de equipo",
+                "Tener una licencia de conducir válida y completar una semana de operación supervisada"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "A pre-operation inspection must be completed:",
+              "es": "La inspección previa a la operación debe completarse:"
+            },
+            "options": {
+              "en": [
+                "Once per week by the lead operator on each shift",
+                "Only when a forklift returns from maintenance",
+                "Before every shift, by the operator who will be using the forklift",
+                "At the beginning of each month as part of a documented safety audit"
+              ],
+              "es": [
+                "Una vez por semana por el operador principal de cada turno",
+                "Solo cuando el montacargas regresa de mantenimiento",
+                "Antes de cada turno, por el operador que lo usará",
+                "Al inicio de cada mes como parte de una auditoría de seguridad documentada"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "During your pre-operation inspection, you discover the parking brake does not hold properly. You must:",
+              "es": "Durante su inspección previa, descubre que el freno de estacionamiento no sujeta correctamente. Usted debe:"
+            },
+            "options": {
+              "en": [
+                "Use extra caution and operate the forklift slowly until it can be repaired at shift end",
+                "Tag the forklift out of service and report the defect to your supervisor before operating",
+                "Operate the forklift in flat areas only until the brake is fixed",
+                "Ask a coworker to verify the issue and get their approval to continue using it"
+              ],
+              "es": [
+                "Tomar precauciones adicionales y operar el montacargas despacio hasta que pueda repararse al final del turno",
+                "Etiquetar el montacargas fuera de servicio y reportar el defecto a su supervisor antes de operarlo",
+                "Operar el montacargas solo en áreas planas hasta que se repare el freno",
+                "Pedir a un compañero que verifique el problema y obtenga su aprobación para continuar usándolo"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "When exchanging a propane tank, which of the following is CORRECT?",
+              "es": "Al cambiar un tanque de propano, ¿cuál de las siguientes acciones es CORRECTA?"
+            },
+            "options": {
+              "en": [
+                "You may swap the tank indoors as long as the area is well ventilated",
+                "Wear gloves, close the service valve before disconnecting, and inspect the new tank for damage before mounting",
+                "Open the service valve fully before connecting the tank to purge any air from the line",
+                "Leave the engine running to maintain system pressure during the tank exchange"
+              ],
+              "es": [
+                "Puede cambiar el tanque en interiores siempre que el área esté bien ventilada",
+                "Use guantes, cierre la válvula de servicio antes de desconectar e inspeccione el nuevo tanque en busca de daños antes de montarlo",
+                "Abra la válvula de servicio completamente antes de conectar el tanque para purgar el aire de la línea",
+                "Deje el motor encendido para mantener la presión del sistema durante el cambio de tanque"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Because forklifts at Container Supply Co. do not have speedometers, how should operators judge their travel speed in open interior areas?",
+              "es": "Dado que los montacargas de Container Supply Co. no tienen velocímetro, ¿cómo deben los operadores calcular su velocidad de desplazamiento en áreas interiores abiertas?"
+            },
+            "options": {
+              "en": [
+                "Match the pace of other forklifts already moving in the same aisle",
+                "Travel at roughly 2 to 3 times a normal walking pace, and slow to a single walking pace at all intersections, doorways, and blind spots",
+                "Move as quickly as needed to stay efficient, stopping only when a pedestrian is directly in the path",
+                "Maintain a slow creeping pace at all times regardless of location"
+              ],
+              "es": [
+                "Igualar el ritmo de otros montacargas que ya se muevan en el mismo pasillo",
+                "Viajar a aproximadamente 2 a 3 veces el paso normal de caminata, y reducir a un solo paso de caminata en todas las intersecciones, entradas y puntos ciegos",
+                "Moverse tan rápido como sea necesario para mantenerse eficiente, deteniéndose solo cuando un peatón esté directamente en el camino",
+                "Mantener un ritmo lento de avance en todo momento sin importar la ubicación"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "You are approaching a blind intersection in the warehouse. The correct action is to:",
+              "es": "Se está acercando a una intersección ciega en el almacén. La acción correcta es:"
+            },
+            "options": {
+              "en": [
+                "Flash your headlights and proceed slowly",
+                "Stop completely and wait for another employee to act as a spotter",
+                "Sound your horn and slow to a walking pace before entering the intersection",
+                "Speed up slightly to clear the intersection quickly and reduce exposure time"
+              ],
+              "es": [
+                "Hacer señales con los faros y avanzar despacio",
+                "Detenerse completamente y esperar a que otro empleado actúe como asistente",
+                "Tocar el claxón y reducir a paso de caminata antes de entrar a la intersección",
+                "Acelerar ligeramente para cruzar la intersección rápidamente y reducir el tiempo de exposición"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Which of the following statements about load handling is CORRECT?",
+              "es": "¿Cuál de los siguientes enunciados sobre el manejo de cargas es CORRECTO?"
+            },
+            "options": {
+              "en": [
+                "It is acceptable to carry a load elevated if you are traveling slowly",
+                "You may exceed the rated load capacity by up to 10% if the load is evenly distributed",
+                "Forks should be 6–8 inches off the ground and tilted back during all travel",
+                "Loads should be set down quickly to reduce the time forks are elevated"
+              ],
+              "es": [
+                "Es aceptable transportar una carga elevada si viaja despacio",
+                "Puede exceder la capacidad nominal hasta un 10% si la carga está distribuida uniformemente",
+                "Las horquillas deben estar a 6–8 pulgadas del suelo e inclinadas hacia atrás durante todo el viaje",
+                "Las cargas deben bajarse rápidamente para reducir el tiempo en que las horquillas están elevadas"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "A pedestrian is standing near your planned travel path. You must:",
+              "es": "Un peatón se encuentra cerca de su trayectoria de viaje planeada. Usted debe:"
+            },
+            "options": {
+              "en": [
+                "Sound your horn and continue at reduced speed — pedestrians are responsible for yielding to forklifts in work zones",
+                "Stop and wait for the pedestrian to clear the area before proceeding",
+                "Steer around the pedestrian, keeping at least 2 feet of clearance",
+                "Flash your lights and sound two short horn blasts to signal them to move"
+              ],
+              "es": [
+                "Tocar el claxón y continuar a velocidad reducida — los peatones son responsables de ceder el paso a los montacargas en zonas de trabajo",
+                "Detenerse y esperar a que el peatón despeje el área antes de continuar",
+                "Rodear al peatón manteniendo al menos 2 pies de distancia",
+                "Encender las luces y tocar dos pitidos cortos para indicarles que se muevan"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "When parking a forklift at the end of your shift, which of the following steps is REQUIRED?",
+              "es": "Al estacionar un montacargas al final de su turno, ¿cuál de los siguientes pasos es REQUERIDO?"
+            },
+            "options": {
+              "en": [
+                "Leave the forks in the travel position (6–8 inches off the ground) to save time at the start of the next shift",
+                "Lower forks to the floor, apply the parking brake, turn off the engine, and remove the key",
+                "Park in the nearest available open space and leave the key in the ignition for the next operator",
+                "Lower forks, set the throttle to idle, and leave the engine running to warm up for the next shift"
+              ],
+              "es": [
+                "Dejar las horquillas en posición de viaje (6–8 pulgadas del suelo) para ahorrar tiempo al inicio del siguiente turno",
+                "Bajar las horquillas al piso, aplicar el freno de estacionamiento, apagar el motor y retirar la llave",
+                "Estacionar en el espacio abierto más cercano y dejar la llave puesta para el siguiente operador",
+                "Bajar las horquillas, ajustar el acelerador al ralentí y dejar el motor encendido para calentar en el siguiente turno"
+              ]
+            }
+          },
+          {
+            "q": {
+              "en": "Refresher forklift training is required after which of the following events?",
+              "es": "La capacitación de actualización en montacargas se requiere después de cuál de los siguientes eventos?"
+            },
+            "options": {
+              "en": [
+                "An operator is observed operating the forklift safely and efficiently for 30 consecutive days",
+                "An operator completes their third year without any reported incidents",
+                "An operator is involved in a near-miss, accident, or observed unsafe operation, or is assigned to a different type of forklift",
+                "An operator requests a pay raise or promotion to a lead position"
+              ],
+              "es": [
+                "Un operador es observado operando el montacargas de forma segura y eficiente durante 30 días consecutivos",
+                "Un operador completa su tercer año sin incidentes reportados",
+                "Un operador está involucrado en un cuasi accidente, accidente u operación insegura observada, o se le asigna un tipo diferente de montacargas",
+                "Un operador solicita un aumento de sueldo o una promoción a un puesto de líder"
+              ]
+            }
+          }
+        ]
+      }
+    ]
 };
 
-/* ===================================================================
-   ███  ENGINE — no need to edit below this line  ███
-   =================================================================== */
+/* =====================  ENGINE  ===================== */
 (function(){
   const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const $ = id => document.getElementById(id);
   const PASS_DEFAULT = CONFIG.records.defaultPassingScore || 80;
+  let currentView = 'matrix';
+  let activeTrainingId = null;
 
-  /* ---- identity (stored locally for convenience) ---- */
-  const ID_KEY = 'csc_tp_identity';
-  function getIdentity(){ try{ return JSON.parse(localStorage.getItem(ID_KEY)||'null'); }catch(_){ return null; } }
-  function setIdentity(o){ try{ localStorage.setItem(ID_KEY, JSON.stringify(o)); }catch(_){} renderWho(); }
-  function renderWho(){
-    const u = getIdentity();
-    $('who').innerHTML = u
-      ? `Signed in as <b>${esc(u.name)}</b>${u.id?` (#${esc(u.id)})`:''} &nbsp;<button id="who-change">Change</button>`
-      : `<button id="who-change">Set your name</button>`;
-    const b = $('who-change'); if(b) b.onclick = ()=>openIdModal();
-  }
-  let idCallback = null;
-  function openIdModal(cb){
-    idCallback = cb || null;
-    const u = getIdentity();
-    $('id-name').value = u ? u.name : '';
-    $('id-num').value  = u ? (u.id||'') : '';
-    $('id-modal').classList.add('show');
-    $('id-name').focus();
-  }
-  function closeIdModal(){ $('id-modal').classList.remove('show'); idCallback = null; }
-  $('id-save').onclick = ()=>{
-    const name = $('id-name').value.trim();
-    if(!name){ $('id-name').focus(); return; }
-    setIdentity({ name, id:$('id-num').value.trim() });
-    const cb = idCallback; closeIdModal();
-    if(cb) cb();
+  /* ---- language ---- */
+  const LANG_KEY = 'csc_tp_lang';
+  function getLang(){ try{ return localStorage.getItem(LANG_KEY) || 'en'; }catch(_){ return 'en'; } }
+  function setLang(l){ try{ localStorage.setItem(LANG_KEY, l); }catch(_){}; document.documentElement.lang=l; renderLangToggle(); renderWho(); rerender(); }
+  function LX(o){ if(o==null) return ''; if(typeof o==='string') return o; return o[getLang()]||o.en||''; }
+  const I18N = {
+    en:{ take:'Take the test \u25b8', start:'Start \u25b8', allTrainings:'\u2190 All trainings',
+      knowledge:'Knowledge check', repeats:'Repeats', submit:'Submit test',
+      qof:(n,m)=>`Question ${n} of ${m}`, answerAll:'Please answer every question before submitting.',
+      passNeed:(q,p)=>`${q} questions \u00b7 you need ${p}% to pass \u00b7 every attempt is recorded.`,
+      passed:'You passed', failed:'Not yet \u2014 try again',
+      scoreLine:(n,c,t,ti)=>`${n} \u00b7 ${c} of ${t} correct \u00b7 ${ti}`,
+      grading:'Grading and recording your attempt\u2026', recorded:'\u2713 Attempt recorded to the company training log.',
+      reviewMissed:'Review the training material for the questions marked incorrect.',
+      yourAnswer:'Your answer', correctAnswer:'Correct answer',
+      retake:'Retake test', viewRecords:'View records', backTrainings:'Back to trainings',
+      needBackend:'Testing isn\u2019t connected yet. Ask IT to finish setup so tests can be graded and recorded.',
+      gradeFail:'Could not reach the grading service. Please try again.',
+      videoSoon:'Training video coming soon', videoSoonSub:'Paste the video\u2019s embed link into this training\u2019s video field in CONFIG.',
+      signedAs:'Signed in as', setName:'Set your name', change:'Change',
+      beforeBegin:'Before you begin', beforeBeginSub:'Enter your name so your test attempts are recorded under the right person.',
+      fullName:'Full name', empId:'Employee ID', optional:'optional', save:'Save & continue', cancel:'Cancel',
+      questionsWord:'questions', passWord:'pass' },
+    es:{ take:'Tomar el examen \u25b8', start:'Comenzar \u25b8', allTrainings:'\u2190 Todas las capacitaciones',
+      knowledge:'Evaluaci\u00f3n de conocimientos', repeats:'Se repite', submit:'Enviar examen',
+      qof:(n,m)=>`Pregunta ${n} de ${m}`, answerAll:'Por favor responda todas las preguntas antes de enviar.',
+      passNeed:(q,p)=>`${q} preguntas \u00b7 necesita ${p}% para aprobar \u00b7 cada intento se registra.`,
+      passed:'Aprobado', failed:'A\u00fan no \u2014 int\u00e9ntelo de nuevo',
+      scoreLine:(n,c,t,ti)=>`${n} \u00b7 ${c} de ${t} correctas \u00b7 ${ti}`,
+      grading:'Calificando y registrando su intento\u2026', recorded:'\u2713 Intento registrado en el historial de capacitaci\u00f3n de la empresa.',
+      reviewMissed:'Repase el material de capacitaci\u00f3n para las preguntas marcadas como incorrectas.',
+      yourAnswer:'Su respuesta', correctAnswer:'Respuesta correcta',
+      retake:'Repetir examen', viewRecords:'Ver registros', backTrainings:'Volver a capacitaciones',
+      needBackend:'El examen a\u00fan no est\u00e1 conectado. Pida a TI que finalice la configuraci\u00f3n para poder calificar y registrar.',
+      gradeFail:'No se pudo contactar el servicio de calificaci\u00f3n. Int\u00e9ntelo de nuevo.',
+      videoSoon:'Video de capacitaci\u00f3n pr\u00f3ximamente', videoSoonSub:'Pegue el enlace del video en el campo video de esta capacitaci\u00f3n en CONFIG.',
+      signedAs:'Sesi\u00f3n iniciada como', setName:'Escriba su nombre', change:'Cambiar',
+      beforeBegin:'Antes de comenzar', beforeBeginSub:'Escriba su nombre para que sus intentos se registren con la persona correcta.',
+      fullName:'Nombre completo', empId:'N\u00famero de empleado', optional:'opcional', save:'Guardar y continuar', cancel:'Cancelar',
+      questionsWord:'preguntas', passWord:'aprobar' }
   };
-  $('id-cancel').onclick = closeIdModal;
+  function T(k){ return (I18N[getLang()]||I18N.en)[k]; }
+  function renderLangToggle(){
+    const l=getLang();
+    $('langtog').innerHTML = `<button class="lt ${l==='en'?'on':''}" data-l="en">EN</button><button class="lt ${l==='es'?'on':''}" data-l="es">ES</button>`;
+    $('langtog').querySelectorAll('.lt').forEach(b=> b.onclick=()=>{ if(getLang()!==b.dataset.l) setLang(b.dataset.l); });
+  }
+  function rerender(){
+    if(currentView==='detail' && activeTrainingId) openTraining(activeTrainingId);
+    else setView(currentView, true);
+  }
+
+  /* ---- identity ---- */
+  const ID_KEY='csc_tp_identity';
+  function getIdentity(){ try{ return JSON.parse(localStorage.getItem(ID_KEY)||'null'); }catch(_){ return null; } }
+  function setIdentity(o){ try{ localStorage.setItem(ID_KEY, JSON.stringify(o)); }catch(_){}; renderWho(); }
+  function renderWho(){
+    const u=getIdentity();
+    $('who').innerHTML = u
+      ? `${esc(T('signedAs'))} <b>${esc(u.name)}</b>${u.id?` (#${esc(u.id)})`:''} &nbsp;<button id="who-change">${esc(T('change'))}</button>`
+      : `<button id="who-change">${esc(T('setName'))}</button>`;
+    const b=$('who-change'); if(b) b.onclick=()=>openIdModal();
+  }
+  let idCallback=null;
+  function openIdModal(cb){
+    idCallback=cb||null;
+    const u=getIdentity();
+    $('idm-title').textContent=T('beforeBegin');
+    $('idm-sub').textContent=T('beforeBeginSub');
+    $('idm-name-label').textContent=T('fullName');
+    $('idm-id-label').innerHTML=`${esc(T('empId'))} <span style="font-weight:400;color:var(--muted)">(${esc(T('optional'))})</span>`;
+    $('id-save').textContent=T('save'); $('id-cancel').textContent=T('cancel');
+    $('id-name').value=u?u.name:''; $('id-num').value=u?(u.id||''):'';
+    $('id-modal').classList.add('show'); $('id-name').focus();
+  }
+  function closeIdModal(){ $('id-modal').classList.remove('show'); idCallback=null; }
+  $('id-save').onclick=()=>{ const name=$('id-name').value.trim(); if(!name){ $('id-name').focus(); return; }
+    setIdentity({name, id:$('id-num').value.trim()}); const cb=idCallback; closeIdModal(); if(cb) cb(); };
+  $('id-cancel').onclick=closeIdModal;
   $('id-modal').addEventListener('click', e=>{ if(e.target===$('id-modal')) closeIdModal(); });
 
-  /* ---- local attempt store (always kept; sole store if no endpoint) ---- */
-  const ATT_KEY = 'csc_tp_attempts';
-  function localAttempts(){ try{ return JSON.parse(localStorage.getItem(ATT_KEY)||'[]'); }catch(_){ return []; } }
-  function pushLocal(rec){ const a = localAttempts(); a.push(rec); try{ localStorage.setItem(ATT_KEY, JSON.stringify(a)); }catch(_){} }
-
-  /* ---- JSONP helper (works cross-origin from GitHub Pages) ---- */
-  let jpN = 0;
+  /* ---- JSONP ---- */
+  let jpN=0;
   function jsonp(baseUrl, cb){
-    const name = '__csc_tp_cb_' + (jpN++);
-    const sep = baseUrl.indexOf('?')>=0 ? '&' : '?';
-    const s = document.createElement('script');
-    let done = false;
-    const finish = (data, err)=>{ if(done) return; done = true;
-      try{ delete window[name]; }catch(_){ window[name]=undefined; }
-      s.remove(); cb(data, err); };
-    window[name] = data => finish(data, null);
-    s.onerror = ()=> finish(null, 'network');
-    s.src = baseUrl + sep + 'callback=' + name;
-    document.body.appendChild(s);
+    const name='__csc_tp_cb_'+(jpN++); const sep=baseUrl.indexOf('?')>=0?'&':'?';
+    const s=document.createElement('script'); let done=false;
+    const finish=(data,err)=>{ if(done)return; done=true; try{delete window[name];}catch(_){window[name]=undefined;} s.remove(); cb(data,err); };
+    window[name]=data=>finish(data,null); s.onerror=()=>finish(null,'network');
+    s.src=baseUrl+sep+'callback='+name; document.body.appendChild(s);
     setTimeout(()=>finish(null,'timeout'), 12000);
   }
-
-  /* ---- log an attempt: local always + backend when configured ---- */
-  function logAttempt(rec, cb){
-    pushLocal(rec);
-    const ep = (CONFIG.records.endpoint||'').trim();
-    if(!ep){ cb && cb({ ok:true, local:true }); return; }
-    const p = new URLSearchParams({
-      action:'log', name:rec.name, id:rec.id||'', trainingId:rec.trainingId,
-      title:rec.title, correct:rec.correct, total:rec.total, percent:rec.percent,
-      result:rec.result, answers:rec.answers, ua:(navigator.userAgent||'').slice(0,120)
-    });
-    jsonp(ep + '?' + p.toString(), (data, err)=>{
-      cb && cb(err ? { ok:false, local:true, error:err } : (data||{ ok:true }));
-    });
-  }
-
-  /* ---- fetch records: backend when configured, else local ---- */
   function fetchRecords(cb){
-    const ep = (CONFIG.records.endpoint||'').trim();
-    if(!ep){
-      const recs = localAttempts().slice().reverse().map(r=>({
-        Timestamp:r.ts, Name:r.name, 'Employee ID':r.id, 'Training':r.title,
-        Percent:r.percent, Result:r.result, Score:r.correct, Total:r.total, _local:true
-      }));
-      cb(recs, { local:true }); return;
-    }
-    jsonp(ep + '?action=records', (data, err)=>{
-      if(err || !data || !data.ok){ 
-        // fall back to local on error so the page still shows something
-        const recs = localAttempts().slice().reverse().map(r=>({
-          Timestamp:r.ts, Name:r.name, 'Employee ID':r.id, 'Training':r.title,
-          Percent:r.percent, Result:r.result, Score:r.correct, Total:r.total, _local:true
-        }));
-        cb(recs, { local:true, error:err||'load failed' });
-      } else {
-        cb(data.records||[], { local:false });
-      }
+    const ep=(CONFIG.records.endpoint||'').trim();
+    if(!ep){ cb([], {local:true}); return; }
+    jsonp(ep+'?action=records', (data,err)=>{
+      if(err||!data||!data.ok) cb([], {local:true, error:err||'load failed'});
+      else cb(data.records||[], {local:false});
     });
   }
 
-  /* ---- recurrence helpers ---- */
-  function recurrenceDays(r){
-    return ({Once:Infinity, Monthly:30, Quarterly:91, Annual:365, Biennial:730, Triennial:1095})[r] ?? 365;
-  }
+  /* ---- helpers ---- */
+  function recurrenceDays(r){ return ({Once:Infinity, Monthly:30, Quarterly:91, Annual:365, Biennial:730, Triennial:1095})[r] ?? 365; }
   function trainingById(id){ return CONFIG.trainings.find(t=>t.id===id); }
   function passScore(t){ return t.passingScore || PASS_DEFAULT; }
   function isRequired(t, role){ return t.required==='ALL' || (Array.isArray(t.required) && t.required.includes(role)); }
 
-  /* =====================  VIEWS  ===================== */
-  const VIEWS = [
-    { id:'matrix',    label:'Training Matrix' },
-    { id:'status',    label:'Completion Status' },
-    { id:'trainings', label:'Trainings', count:()=>CONFIG.trainings.length },
-    { id:'records',   label:'Records' }
-  ];
+  /* ---- tabs / views ---- */
+  const VIEWS=[{id:'matrix',label:'Training Matrix'},{id:'status',label:'Completion Status'},{id:'trainings',label:'Trainings',count:()=>CONFIG.trainings.length},{id:'records',label:'Records'}];
   function buildTabs(){
-    $('tabs').innerHTML = VIEWS.map(v=>
-      `<button class="tab" role="tab" data-view="${v.id}" aria-selected="${v.id==='matrix'}">
-         ${esc(v.label)}${v.count?`<span class="cnt">${v.count()}</span>`:''}
-       </button>`).join('');
-    $('tabs').querySelectorAll('.tab').forEach(b=> b.onclick = ()=>setView(b.dataset.view));
+    $('tabs').innerHTML=VIEWS.map(v=>`<button class="tab" role="tab" data-view="${v.id}" aria-selected="${v.id==='matrix'}">${esc(v.label)}${v.count?`<span class="cnt">${v.count()}</span>`:''}</button>`).join('');
+    $('tabs').querySelectorAll('.tab').forEach(b=> b.onclick=()=>setView(b.dataset.view));
   }
-  function setView(name){
+  function setView(name, skipScroll){
+    currentView=name;
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     $('view-'+name).classList.add('active');
     $('tabs').querySelectorAll('.tab').forEach(b=> b.setAttribute('aria-selected', b.dataset.view===name));
-    window.scrollTo({top:0, behavior:'smooth'});
-    if(name==='matrix')   renderMatrix();
-    if(name==='status')   renderStatus();
-    if(name==='trainings')renderCatalog();
-    if(name==='records')  renderRecords();
+    if(!skipScroll) window.scrollTo({top:0,behavior:'smooth'});
+    if(name==='matrix') renderMatrix();
+    if(name==='status') renderStatus();
+    if(name==='trainings') renderCatalog();
+    if(name==='records') renderRecords();
   }
 
   /* ---- Matrix: roles (rows) × trainings (cols) ---- */
   function renderMatrix(){
-    const ts = CONFIG.trainings;
-    const body = CONFIG.roles.map(role=>{
-      const cells = ts.map(t=>`<td class="cell-req">${isRequired(t,role)?`<span class="req-dot" title="Required: ${esc(t.title)}">✓</span>`:'<span class="req-no">·</span>'}</td>`).join('');
+    const ts=CONFIG.trainings;
+    const body=CONFIG.roles.map(role=>{
+      const cells=ts.map(t=>`<td class="cell-req">${isRequired(t,role)?`<span class="req-dot" title="Required: ${esc(t.title)}">\u2713</span>`:'<span class="req-no">\u00b7</span>'}</td>`).join('');
       return `<tr data-role="${esc(role)}"><td class="t-name">${esc(role)}</td>${cells}</tr>`;
     }).join('');
-    $('view-matrix').innerHTML = `
-      <div class="view-head">
-        <h1 class="serif">Training Matrix</h1>
-        <p>Which trainings each job title must complete, and how often they repeat. Roles come from the Title column of FRM-025-003; add a training in CONFIG and a new column appears here automatically.</p>
-      </div>
-      <div class="toolbar">
-        <span class="field"><input id="mx-search" type="text" placeholder="Filter job titles…"></span>
-        <span class="spacer"></span>
-        <span class="legend"><span><span class="req-dot">✓</span>Required</span></span>
-      </div>
-      <div class="tbl-wrap">
-        <table class="matrix">
-          <thead><tr><th>Role (job title)</th>${ts.map(t=>`<th title="${esc(t.title)}">${esc(t.title)}<span style="display:block;font-weight:400;font-size:.72rem;color:#c2cbe0;margin-top:2px">${esc(t.recurrence)}</span></th>`).join('')}</tr></thead>
-          <tbody id="mx-body">${body}</tbody>
-        </table>
-      </div>`;
-    const s = $('mx-search');
-    if(s) s.oninput = ()=>{ const qv=s.value.toLowerCase();
-      document.querySelectorAll('#mx-body tr').forEach(tr=>{ tr.style.display = (!qv || tr.dataset.role.toLowerCase().includes(qv)) ? '' : 'none'; }); };
+    $('view-matrix').innerHTML=`
+      <div class="view-head"><h1 class="serif">Training Matrix</h1>
+        <p>Which trainings each job title must complete, and how often they repeat. Roles come from the Title column of FRM-025-003; add a training in CONFIG and a new column appears here automatically.</p></div>
+      <div class="toolbar"><span class="field"><input id="mx-search" type="text" placeholder="Filter job titles\u2026"></span><span class="spacer"></span><span class="legend"><span><span class="req-dot">\u2713</span>Required</span></span></div>
+      <div class="tbl-wrap"><table class="matrix">
+        <thead><tr><th>Role (job title)</th>${ts.map(t=>`<th title="${esc(t.title)}">${esc(t.title)}<span style="display:block;font-weight:400;font-size:.72rem;color:#c2cbe0;margin-top:2px">${esc(t.recurrence)}</span></th>`).join('')}</tr></thead>
+        <tbody id="mx-body">${body}</tbody></table></div>`;
+    const s=$('mx-search'); if(s) s.oninput=()=>{ const qv=s.value.toLowerCase();
+      document.querySelectorAll('#mx-body tr').forEach(tr=>{ tr.style.display=(!qv||tr.dataset.role.toLowerCase().includes(qv))?'':'none'; }); };
   }
-  /* ---- Completion Status: employees × required trainings (uses records) ---- */
+
+  /* ---- Completion Status ---- */
   function latestPass(records, name, trainingId){
-    let best = null;
-    records.forEach(r=>{
-      const rn = (r.Name||'').toLowerCase().trim();
-      const rt = (r['Training ID']||r.trainingId||'');
-      const result = (r.Result||'').toLowerCase();
-      if(rn===name.toLowerCase().trim() && rt===trainingId && result==='pass'){
-        const ts = new Date(r.Timestamp||r.ts||0).getTime();
-        if(!best || ts>best) best = ts;
-      }
-    });
+    let best=null;
+    records.forEach(r=>{ const rn=(r.Name||'').toLowerCase().trim(); const rt=(r['Training ID']||r.trainingId||''); const res=(r.Result||'').toLowerCase();
+      if(rn===name.toLowerCase().trim() && rt===trainingId && res==='pass'){ const ts=new Date(r.Timestamp||r.ts||0).getTime(); if(!best||ts>best) best=ts; } });
     return best;
   }
   function renderStatus(){
-    const head = `
-      <div class="view-head">
-        <h1 class="serif">Completion Status</h1>
-        <p>Each employee's standing on the trainings their role requires, based on recorded test passes. <span class="muted-note">Current = passed within the repeat window · Due = passed but expired · Missing = no passing attempt on record.</span></p>
-      </div>`;
-    if(!CONFIG.employees || !CONFIG.employees.length){
-      $('view-status').innerHTML = head + `<div class="empty"><b>No roster yet</b>Add staff to the <code>employees</code> list in CONFIG to track who is current, due, or missing each required training.</div>`;
-      return;
+    const head=`<div class="view-head"><h1 class="serif">Completion Status</h1>
+      <p>Each employee's standing on the trainings their role requires, based on recorded test passes. <span class="muted-note">Current = passed within the repeat window \u00b7 Due = passed but expired \u00b7 Missing = no passing attempt on record.</span></p></div>`;
+    if(!CONFIG.employees||!CONFIG.employees.length){
+      $('view-status').innerHTML=head+`<div class="empty"><b>No roster yet</b>Add staff to the <code>employees</code> list in CONFIG to track who is current, due, or missing each required training.</div>`; return;
     }
-    $('view-status').innerHTML = head + `<div class="muted-note" id="status-loading">Loading records…</div>`;
-    fetchRecords((records, info)=>{
-      const now = Date.now();
-      const rows = CONFIG.employees.map(emp=>{
-        const cells = CONFIG.trainings.map(t=>{
-          if(!isRequired(t, emp.role)) return `<td style="text-align:center;color:#c2cbe0">—</td>`;
-          const lp = latestPass(records, emp.name, t.id);
-          let cls='s-missing', txt='Missing';
-          if(lp){
-            const days = (now-lp)/86400000;
-            if(days <= recurrenceDays(t.recurrence)){ cls='s-current'; txt='Current'; }
-            else { cls='s-due'; txt='Due'; }
-          }
+    $('view-status').innerHTML=head+`<div class="muted-note">Loading records\u2026</div>`;
+    fetchRecords((records,info)=>{
+      const now=Date.now();
+      const rows=CONFIG.employees.map(emp=>{
+        const cells=CONFIG.trainings.map(t=>{
+          if(!isRequired(t,emp.role)) return `<td style="text-align:center;color:#c2cbe0">\u2014</td>`;
+          const lp=latestPass(records,emp.name,t.id); let cls='s-missing',txt='Missing';
+          if(lp){ const days=(now-lp)/86400000; if(days<=recurrenceDays(t.recurrence)){cls='s-current';txt='Current';} else {cls='s-due';txt='Due';} }
           return `<td><span class="status-tag ${cls}" title="${esc(t.title)}">${txt}</span></td>`;
         }).join('');
-        return `<tr><td><span class="t-name">${esc(emp.name)}</span>
-                  <span class="t-sub">${esc(emp.role)}${emp.id?` · #${esc(emp.id)}`:''}</span></td>
-                ${cells}</tr>`;
+        return `<tr><td><span class="t-name">${esc(emp.name)}</span><span class="t-sub">${esc(emp.role)}${emp.id?` \u00b7 #${esc(emp.id)}`:''}</span></td>${cells}</tr>`;
       }).join('');
-      // header columns = union of required trainings (kept simple: all trainings)
-      const cols = CONFIG.trainings.map(t=>`<th title="${esc(t.title)}">${esc(t.title.split(' ').slice(0,3).join(' '))}</th>`).join('');
-      $('view-status').innerHTML = head + `
-        <div class="tbl-wrap"><table class="matrix">
-          <thead><tr><th>Employee</th>${cols}</tr></thead>
-          <tbody>${rows}</tbody></table></div>
-        ${info&&info.local?`<p class="muted-note" style="margin-top:10px">Showing locally-stored attempts only — connect the records backend (CONFIG.records.endpoint) for shared, company-wide status.</p>`:''}`;
-      // re-pad rows so every employee row spans all training columns
+      const cols=CONFIG.trainings.map(t=>`<th title="${esc(t.title)}">${esc(t.title.split(' ').slice(0,3).join(' '))}</th>`).join('');
+      $('view-status').innerHTML=head+`<div class="tbl-wrap"><table class="matrix"><thead><tr><th>Employee</th>${cols}</tr></thead><tbody>${rows}</tbody></table></div>${info&&info.local?`<p class="muted-note" style="margin-top:10px">No central records yet \u2014 connect CONFIG.records.endpoint for company-wide status.</p>`:''}`;
     });
   }
 
-  /* ---- Trainings catalog ---- */
+  /* ---- Catalog ---- */
   function renderCatalog(){
-    const cards = CONFIG.trainings.map(t=>`
-      <div class="tcard reveal">
-        <div class="body">
-          <h3>${esc(t.title)}</h3>
-          <div class="meta"><span class="chip chip-cat">${esc(t.category)}</span><span class="chip chip-rec">${esc(t.recurrence)}</span></div>
-          <p>${esc(t.description||'')}</p>
-        </div>
-        <div class="foot">
-          <span class="qn">${(t.questions||[]).length} questions · pass ${passScore(t)}%</span>
-          <button class="btn sm" data-open="${esc(t.id)}">Start ▸</button>
-        </div>
-      </div>`).join('');
-    $('view-trainings').innerHTML = `
-      <div class="view-head"><h1 class="serif">Trainings</h1>
-        <p>Watch the training, then take the test right here. Your result is recorded automatically.</p></div>
-      <div class="grid">${cards||'<div class="empty"><b>No trainings yet</b>Add them in CONFIG.</div>'}</div>`;
+    const cards=CONFIG.trainings.map(t=>`
+      <div class="tcard reveal"><div class="body">
+        <h3>${esc(t.title)}</h3>
+        <div class="meta"><span class="chip chip-cat">${esc(t.category)}</span><span class="chip chip-rec">${esc(t.recurrence)}</span></div>
+        <p>${esc(t.description||'')}</p></div>
+        <div class="foot"><span class="qn">${(t.questions||[]).length} ${esc(T('questionsWord'))} \u00b7 ${esc(T('passWord'))} ${passScore(t)}%</span>
+          <button class="btn sm" data-open="${esc(t.id)}">${esc(T('start'))}</button></div></div>`).join('');
+    $('view-trainings').innerHTML=`<div class="view-head"><h1 class="serif">Trainings</h1><p>Watch the training, then take the test right here. Your result is recorded automatically.</p></div><div class="grid">${cards}</div>`;
     $('view-trainings').querySelectorAll('[data-open]').forEach(b=> b.onclick=()=>openTraining(b.dataset.open));
   }
 
-  /* ---- Training detail + quiz ---- */
-  let activeQuiz = null; // { training }
+  /* ---- Detail + quiz ---- */
   function videoEmbed(t){
-    if(t.video){
-      return `<div class="video-wrap"><iframe src="${esc(t.video)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="${esc(t.title)} video"></iframe></div>`;
-    }
-    return `<div class="video-wrap"><div class="video-ph"><b>Training video coming soon</b>Paste the video's embed link into this training's <code>video</code> field in CONFIG.</div></div>`;
+    if(t.video) return `<div class="video-wrap"><iframe src="${esc(t.video)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="${esc(t.title)}"></iframe></div>`;
+    return `<div class="video-wrap"><div class="video-ph"><b>${esc(T('videoSoon'))}</b>${esc(T('videoSoonSub'))}</div></div>`;
   }
   function openTraining(id){
-    const t = trainingById(id); if(!t) return;
-    activeQuiz = { training:t };
-    $('view-detail').innerHTML = `
-      <button class="btn secondary sm" id="back-cat" style="margin-bottom:16px">← All trainings</button>
+    const t=trainingById(id); if(!t) return; activeTrainingId=id;
+    $('view-detail').innerHTML=`
+      <button class="btn secondary sm" id="back-cat" style="margin-bottom:16px">${esc(T('allTrainings'))}</button>
       <div class="detail-card reveal">
         <div class="detail-head"><h2 class="serif">${esc(t.title)}</h2>
-          <div class="meta"><span class="chip chip-cat">${esc(t.category)}</span>
-            <span class="chip chip-rec">Repeats: ${esc(t.recurrence)}</span></div></div>
+          <div class="meta"><span class="chip chip-cat">${esc(t.category)}</span><span class="chip chip-rec">${esc(T('repeats'))}: ${esc(t.recurrence)}</span></div></div>
         ${videoEmbed(t)}
         <div class="detail-body">
           <p class="lead">${esc(t.description||'')}</p>
-          <div class="quiz-intro">
-            <div class="txt"><h4 class="serif">Knowledge check</h4>
-              <p>${(t.questions||[]).length} questions · you need ${passScore(t)}% to pass · every attempt is recorded.</p></div>
-            <button class="btn" id="start-quiz">Take the test ▸</button>
-          </div>
+          <div class="quiz-intro"><div class="txt"><h4 class="serif">${esc(T('knowledge'))}</h4><p>${esc(T('passNeed')((t.questions||[]).length, passScore(t)))}</p></div>
+            <button class="btn" id="start-quiz">${esc(T('take'))}</button></div>
           <div id="quiz-mount"></div>
-        </div>
-      </div>`;
+        </div></div>`;
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-    $('view-detail').classList.add('active');
+    $('view-detail').classList.add('active'); currentView='detail';
     $('tabs').querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected','false'));
     window.scrollTo({top:0,behavior:'smooth'});
-    $('back-cat').onclick = ()=>setView('trainings');
-    $('start-quiz').onclick = ()=>{
-      if(!getIdentity()){ openIdModal(()=>renderQuiz(t)); return; }
-      renderQuiz(t);
-    };
+    $('back-cat').onclick=()=>setView('trainings');
+    $('start-quiz').onclick=()=>{ if(!getIdentity()){ openIdModal(()=>renderQuiz(t)); return; } renderQuiz(t); };
   }
   function renderQuiz(t){
-    const qs = t.questions||[];
-    $('quiz-mount').innerHTML = qs.map((q,i)=>`
-      <div class="q-block" data-q="${i}">
-        <div class="q-num">Question ${i+1} of ${qs.length}</div>
-        <div class="q-text">${esc(q.q)}</div>
-        ${q.options.map((o,j)=>`
-          <label class="opt"><input type="radio" name="q${i}" value="${j}"><span>${esc(o)}</span><span class="mark"></span></label>
-        `).join('')}
-      </div>`).join('') + `
-      <div class="quiz-actions">
-        <button class="btn" id="submit-quiz">Submit test</button>
-        <span class="warn" id="quiz-warn" style="display:none">Please answer every question before submitting.</span>
-      </div>`;
-    $('start-quiz').disabled = true;
-    $('submit-quiz').onclick = ()=>gradeQuiz(t);
-    $('quiz-mount').scrollIntoView({behavior:'smooth', block:'start'});
+    const qs=t.questions||[]; const lang=getLang();
+    $('quiz-mount').innerHTML=qs.map((q,i)=>`
+      <div class="q-block" data-q="${i}"><div class="q-num">${esc(T('qof')(i+1,qs.length))}</div>
+        <div class="q-text">${esc(LX(q.q))}</div>
+        ${LX(q.options).map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}"><span>${esc(o)}</span><span class="mark"></span></label>`).join('')}
+      </div>`).join('')+`
+      <div class="quiz-actions"><button class="btn" id="submit-quiz">${esc(T('submit'))}</button><span class="warn" id="quiz-warn" style="display:none"></span></div>`;
+    $('start-quiz').disabled=true;
+    $('submit-quiz').onclick=()=>submitQuiz(t);
+    $('quiz-mount').scrollIntoView({behavior:'smooth',block:'start'});
   }
-  function gradeQuiz(t){
-    const qs = t.questions||[];
-    const chosen = qs.map((q,i)=>{
-      const sel = document.querySelector(`input[name="q${i}"]:checked`);
-      return sel ? Number(sel.value) : -1;
+  function submitQuiz(t){
+    const qs=t.questions||[];
+    const chosen=qs.map((q,i)=>{ const s=document.querySelector(`input[name="q${i}"]:checked`); return s?Number(s.value):-1; });
+    const warn=$('quiz-warn');
+    if(chosen.some(c=>c<0)){ warn.textContent=T('answerAll'); warn.style.display='inline'; return; }
+    warn.style.display='none';
+    const ep=(CONFIG.records.endpoint||'').trim();
+    if(!ep){ warn.textContent=T('needBackend'); warn.style.display='inline'; return; }
+    const sub=$('submit-quiz'); sub.disabled=true; sub.textContent=T('grading');
+    qs.forEach((q,i)=> document.querySelectorAll(`input[name="q${i}"]`).forEach(inp=>inp.disabled=true));
+    const u=getIdentity()||{name:'Unknown'};
+    const p=new URLSearchParams({ action:'grade', trainingId:t.id, title:t.title, name:u.name, id:u.id||'', answers:chosen.join(','), lang:getLang(), ua:(navigator.userAgent||'').slice(0,120) });
+    jsonp(ep+'?'+p.toString(), (data,err)=>{
+      if(err||!data||!data.ok){ sub.disabled=false; sub.textContent=T('submit'); qs.forEach((q,i)=>document.querySelectorAll(`input[name="q${i}"]`).forEach(inp=>inp.disabled=false));
+        warn.textContent=T('gradeFail'); warn.style.display='inline'; return; }
+      renderResult(t,u,chosen,data);
     });
-    if(chosen.some(c=>c<0)){ $('quiz-warn').style.display='inline'; return; }
-    $('quiz-warn').style.display='none';
-    let correct = 0;
-    qs.forEach((q,i)=>{ if(chosen[i]===q.answer) correct++; });
-    const total = qs.length;
-    const percent = Math.round((correct/total)*100);
-    const result = percent >= passScore(t) ? 'Pass' : 'Fail';
-
-    // lock + mark answers for review
-    qs.forEach((q,i)=>{
-      const block = document.querySelector(`.q-block[data-q="${i}"]`);
+  }
+  function renderResult(t,u,chosen,data){
+    const qs=t.questions||[]; const wrong=new Set(data.wrong||[]);
+    qs.forEach((q,i)=>{ const block=document.querySelector(`.q-block[data-q="${i}"]`); if(!block) return;
       block.querySelectorAll('.opt').forEach((opt,j)=>{
-        opt.querySelector('input').disabled = true;
-        if(j===q.answer){ opt.classList.add('correct'); opt.querySelector('.mark').textContent='Correct answer'; }
-        if(j===chosen[i] && chosen[i]!==q.answer){ opt.classList.add('wrong'); opt.querySelector('.mark').textContent='Your answer'; }
-      });
-    });
-
-    const u = getIdentity() || { name:'Unknown' };
-    const rec = {
-      ts:new Date().toISOString(), name:u.name, id:u.id||'',
-      trainingId:t.id, title:t.title, correct, total, percent, result,
-      answers: chosen.join('')   // chosen option index per question, compact
-    };
-
-    const mount = $('quiz-mount');
-    const card = document.createElement('div');
-    card.className = 'result ' + (result==='Pass'?'pass':'fail');
-    card.innerHTML = `
-      <div class="ring">${percent}%</div>
-      <h2 class="serif">${result==='Pass'?'You passed':'Not yet — try again'}</h2>
-      <div class="sub">${esc(u.name)} · ${correct} of ${total} correct · ${esc(t.title)}</div>
-      <div class="logged" id="log-state">Recording your attempt…</div>
+        if(wrong.has(i) && j===chosen[i]){ opt.classList.add('wrong'); opt.querySelector('.mark').textContent=T('yourAnswer'); }
+        if(data.key && j===data.key[i]){ opt.classList.add('correct'); opt.querySelector('.mark').textContent=T('correctAnswer'); }
+      }); });
+    const pass=data.result==='Pass';
+    const card=document.createElement('div'); card.className='result '+(pass?'pass':'fail');
+    card.innerHTML=`<div class="ring">${data.percent}%</div>
+      <h2 class="serif">${esc(pass?T('passed'):T('failed'))}</h2>
+      <div class="sub">${esc(T('scoreLine')(u.name,data.correct,data.total,t.title))}</div>
+      <div class="logged">${esc(T('recorded'))}</div>
+      ${(data.wrong&&data.wrong.length)?`<div class="muted-note" style="margin-top:6px">${esc(T('reviewMissed'))}</div>`:''}
       <div class="quiz-actions" style="justify-content:center;margin-top:18px">
-        <button class="btn secondary" id="retake">Retake test</button>
-        <button class="btn secondary" id="to-records">View records</button>
-        <button class="btn" id="to-cat">Back to trainings</button>
-      </div>`;
-    mount.innerHTML = '';
-    mount.appendChild(card);
-    mount.scrollIntoView({behavior:'smooth', block:'start'});
-
-    logAttempt(rec, (resp)=>{
-      const el = $('log-state'); if(!el) return;
-      if(resp && resp.ok && !resp.local){ el.textContent = '✓ Attempt recorded to the company training log.'; }
-      else if(resp && resp.local){ el.textContent = '✓ Attempt saved on this device (connect the records backend to log company-wide).'; el.classList.add('local'); }
-      else { el.textContent = 'Saved locally; the company log could not be reached.'; el.classList.add('local'); }
-    });
-
-    $('retake').onclick = ()=>openTraining(t.id);
-    $('to-cat').onclick = ()=>setView('trainings');
-    $('to-records').onclick = ()=>setView('records');
+        <button class="btn secondary" id="retake">${esc(T('retake'))}</button>
+        <button class="btn secondary" id="to-records">${esc(T('viewRecords'))}</button>
+        <button class="btn" id="to-cat">${esc(T('backTrainings'))}</button></div>`;
+    $('quiz-mount').appendChild(card); card.scrollIntoView({behavior:'smooth',block:'center'});
+    $('retake').onclick=()=>openTraining(t.id);
+    $('to-cat').onclick=()=>setView('trainings');
+    $('to-records').onclick=()=>setView('records');
   }
 
-  /* ---- Records (every attempt) ---- */
-  let recordCache = [];
+  /* ---- Records ---- */
+  let recordCache=[];
   function renderRecords(){
-    $('view-records').innerHTML = `
-      <div class="view-head"><h1 class="serif">Completion Records</h1>
-        <p>Every test attempt, newest first. These are kept separately from the trainings so nothing is overwritten.</p></div>
-      <div class="toolbar">
-        <span class="field"><input id="rec-search" type="text" placeholder="Filter by name or training…"></span>
-        <span class="field"><select id="rec-result"><option value="">All results</option><option>Pass</option><option>Fail</option></select></span>
-        <span class="spacer"></span>
-        <button class="btn secondary sm" id="rec-refresh">Refresh</button>
-        <button class="btn secondary sm" id="rec-csv">Export CSV</button>
-      </div>
-      <div id="rec-mount"><p class="muted-note">Loading records…</p></div>`;
-    const draw = ()=>{
-      fetchRecords((records, info)=>{
-        recordCache = records;
-        paintRecords(records, info);
-      });
-    };
-    $('rec-refresh').onclick = draw;
-    $('rec-search').oninput = ()=>paintRecords(recordCache);
-    $('rec-result').onchange = ()=>paintRecords(recordCache);
-    $('rec-csv').onclick = exportCsv;
+    $('view-records').innerHTML=`<div class="view-head"><h1 class="serif">Completion Records</h1><p>Every test attempt, newest first. Graded and stored separately from the trainings so nothing is overwritten.</p></div>
+      <div class="toolbar"><span class="field"><input id="rec-search" type="text" placeholder="Filter by name or training\u2026"></span>
+      <span class="field"><select id="rec-result"><option value="">All results</option><option>Pass</option><option>Fail</option></select></span>
+      <span class="spacer"></span><button class="btn secondary sm" id="rec-refresh">Refresh</button><button class="btn secondary sm" id="rec-csv">Export CSV</button></div>
+      <div id="rec-mount"><p class="muted-note">Loading records\u2026</p></div>`;
+    const draw=()=>fetchRecords((records,info)=>{ recordCache=records; paintRecords(records,info); });
+    $('rec-refresh').onclick=draw; $('rec-search').oninput=()=>paintRecords(recordCache); $('rec-result').onchange=()=>paintRecords(recordCache); $('rec-csv').onclick=exportCsv;
     draw();
   }
-  function fmtDate(v){
-    const d = new Date(v); if(isNaN(d)) return esc(v);
-    return d.toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-  }
-  function paintRecords(records, info){
-    const q = ($('rec-search')?.value||'').toLowerCase();
-    const rf = ($('rec-result')?.value||'');
-    const filtered = (records||[]).filter(r=>{
-      const hay = `${r.Name||''} ${r.Training||r.title||''} ${r['Employee ID']||''}`.toLowerCase();
-      const okQ = !q || hay.includes(q);
-      const okR = !rf || (r.Result||'')===rf;
-      return okQ && okR;
-    });
-    const mount = $('rec-mount');
-    if(!filtered.length){
-      mount.innerHTML = `<div class="empty"><b>No attempts recorded</b>Once someone completes a test, every attempt shows up here.</div>`;
-    } else {
-      mount.innerHTML = `
-        <div class="tbl-wrap"><table class="records">
-          <thead><tr><th>Date</th><th>Name</th><th>ID</th><th>Training</th><th>Score</th><th>%</th><th>Result</th></tr></thead>
-          <tbody>${filtered.map(r=>`
-            <tr>
-              <td>${fmtDate(r.Timestamp||r.ts)}</td>
-              <td>${esc(r.Name||'')}</td>
-              <td>${esc(r['Employee ID']||r.id||'')}</td>
-              <td>${esc(r.Training||r.title||'')}</td>
-              <td>${esc(r.Score!=null?r.Score:r.correct)}/${esc(r.Total!=null?r.Total:r.total)}</td>
-              <td>${esc(r.Percent!=null?r.Percent:r.percent)}%</td>
-              <td class="${(r.Result||'')==='Pass'?'res-pass':'res-fail'}">${esc(r.Result||'')}</td>
-            </tr>`).join('')}</tbody></table></div>
-        <p class="muted-note" style="margin-top:10px">${filtered.length} attempt${filtered.length!==1?'s':''} shown${info&&info.local?' · stored on this device only — connect the records backend for shared records':''}.</p>`;
-    }
+  function fmtDate(v){ const d=new Date(v); if(isNaN(d)) return esc(v); return d.toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
+  function paintRecords(records,info){
+    const q=($('rec-search')?.value||'').toLowerCase(); const rf=($('rec-result')?.value||'');
+    const filtered=(records||[]).filter(r=>{ const hay=`${r.Name||''} ${r.Training||''} ${r['Employee ID']||''}`.toLowerCase(); return (!q||hay.includes(q)) && (!rf||(r.Result||'')===rf); });
+    const mount=$('rec-mount');
+    if(!filtered.length){ mount.innerHTML=`<div class="empty"><b>No attempts recorded yet</b>${info&&info.local?'Connect CONFIG.records.endpoint, then completed tests will appear here.':'Once someone completes a test, every attempt shows up here.'}</div>`; return; }
+    mount.innerHTML=`<div class="tbl-wrap"><table class="records"><thead><tr><th>Date</th><th>Name</th><th>ID</th><th>Training</th><th>Lang</th><th>Score</th><th>%</th><th>Result</th></tr></thead>
+      <tbody>${filtered.map(r=>`<tr><td>${fmtDate(r.Timestamp)}</td><td>${esc(r.Name||'')}</td><td>${esc(r['Employee ID']||'')}</td><td>${esc(r.Training||'')}</td><td>${esc((r.Language||'').toString().toUpperCase())}</td><td>${esc(r.Score)}/${esc(r.Total)}</td><td>${esc(r.Percent)}%</td><td class="${(r.Result||'')==='Pass'?'res-pass':'res-fail'}">${esc(r.Result||'')}</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted-note" style="margin-top:10px">${filtered.length} attempt${filtered.length!==1?'s':''} shown.</p>`;
   }
   function exportCsv(){
-    const rows = recordCache||[];
-    const head = ['Timestamp','Name','Employee ID','Training','Score','Total','Percent','Result'];
-    const lines = [head.join(',')].concat(rows.map(r=>[
-      r.Timestamp||r.ts||'', r.Name||'', r['Employee ID']||r.id||'', r.Training||r.title||'',
-      (r.Score!=null?r.Score:r.correct), (r.Total!=null?r.Total:r.total),
-      (r.Percent!=null?r.Percent:r.percent), r.Result||''
-    ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
-    const blob = new Blob([lines.join('\n')], {type:'text/csv'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'training-records.csv';
-    a.click(); URL.revokeObjectURL(a.href);
+    const rows=recordCache||[]; const head=['Timestamp','Name','Employee ID','Training','Language','Score','Total','Percent','Result'];
+    const lines=[head.join(',')].concat(rows.map(r=>[r.Timestamp||'',r.Name||'',r['Employee ID']||'',r.Training||'',r.Language||'',r.Score,r.Total,r.Percent,r.Result||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
+    const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='training-records.csv'; a.click(); URL.revokeObjectURL(a.href);
   }
 
   /* ---- boot ---- */
-  renderWho();
-  buildTabs();
-  renderMatrix();
+  document.documentElement.lang=getLang();
+  renderLangToggle(); renderWho(); buildTabs(); renderMatrix();
 })();
 </script>
 </body>
