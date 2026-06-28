@@ -247,8 +247,6 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
     <p id="idm-sub">Enter your name so your test attempts are recorded under the right person.</p>
     <label id="idm-name-label" for="id-name">Full name</label>
     <input id="id-name" type="text" autocomplete="name">
-    <label id="idm-id-label" for="id-num">Employee ID</label>
-    <input id="id-num" type="text" autocomplete="off">
     <div class="row">
       <button class="btn secondary" id="id-cancel">Cancel</button>
       <button class="btn" id="id-save">Save &amp; continue</button>
@@ -1242,14 +1240,13 @@ const CONFIG = {
     $('idm-title').textContent=T('beforeBegin');
     $('idm-sub').textContent=T('beforeBeginSub');
     $('idm-name-label').textContent=T('fullName');
-    $('idm-id-label').innerHTML=`${esc(T('empId'))} <span style="font-weight:400;color:var(--muted)">(${esc(T('optional'))})</span>`;
     $('id-save').textContent=T('save'); $('id-cancel').textContent=T('cancel');
-    $('id-name').value=u?u.name:''; $('id-num').value=u?(u.id||''):'';
+    $('id-name').value=u?u.name:'';
     $('id-modal').classList.add('show'); $('id-name').focus();
   }
   function closeIdModal(){ $('id-modal').classList.remove('show'); idCallback=null; }
   $('id-save').onclick=()=>{ const name=$('id-name').value.trim(); if(!name){ $('id-name').focus(); return; }
-    setIdentity({name, id:$('id-num').value.trim()}); const cb=idCallback; closeIdModal(); if(cb) cb(); };
+    setIdentity({name}); const cb=idCallback; closeIdModal(); if(cb) cb(); };
   $('id-cancel').onclick=closeIdModal;
   $('id-modal').addEventListener('click', e=>{ if(e.target===$('id-modal')) closeIdModal(); });
 
