@@ -214,11 +214,11 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
   <div class="topbar-inner">
     <div class="brand">
       <img class="mark" src="csc-mark.png" alt="Container Supply" onerror="this.style.display='none'">
-      <div class="wordmark"><div class="co">Container Supply</div><div class="hub">Training Portal</div></div>
+      <div class="wordmark"><div class="co">Container Supply</div><div class="hub" id="wm-sub">Training Portal</div></div>
     </div>
     <div class="topbar-actions">
       <span class="langtog" id="langtog"></span>
-      <a class="btn-ghost" href="index.html">← Hub</a>
+      <a class="btn-ghost" id="hub-link" href="index.html">← Return to Info Hub</a>
     </div>
   </div>
 </header>
@@ -234,7 +234,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
 <footer>
   <div class="footer-inner">
     <div class="footer-brand"><img src="csc-mark-white.png" alt="Container Supply" onerror="this.style.display='none'"><span class="ftxt">Container Supply Co.</span></div>
-    <div>Internal use only • Garden Grove, CA • Training records retained per SQF requirements</div>
+    <div id="footer-note">Internal use only • Garden Grove, CA • Training records retained per SQF requirements</div>
   </div>
 </footer>
 
@@ -270,13 +270,13 @@ const CONFIG = {
     [
       {
         "id": "gmp",
-        "title": "GMP (including Personal Hygiene)",
-        "category": "Quality & Food Safety",
+        "title": {"en": "GMP (including Personal Hygiene)", "es": "BPM e Higiene Personal"},
+        "category": {"en": "Quality & Food Safety", "es": "Calidad e Inocuidad Alimentaria"},
         "required": "ALL",
         "recurrence": "Annual",
         "passingScore": 80,
         "video": {"en": "https://www.youtube.com/embed/ucUh6cX1t9g", "es": "https://www.youtube.com/embed/CeiMrW9qHj4"},
-        "description": "Good Manufacturing Practices that keep our cans and containers safe for food contact: personal hygiene, foreign-material control, plant and grounds, and employee conduct (PRO-009-000).",
+        "description": {"en": "Good Manufacturing Practices that keep our cans and containers safe for food contact: personal hygiene, foreign-material control, plant and grounds, and employee conduct (PRO-009-000).", "es": "Buenas Prácticas de Manufactura que mantienen nuestras latas y envases seguros para el contacto con alimentos: higiene personal, control de materia extraña, planta y terrenos, y conducta del empleado (PRO-009-000)."},
         "questions": [
           {
             "q": {
@@ -482,13 +482,13 @@ const CONFIG = {
       },
       {
         "id": "product-defense",
-        "title": "Product Defense and Fraud in Manufacturing",
-        "category": "Safety & Compliance",
+        "title": {"en": "Product Defense and Fraud in Manufacturing", "es": "Defensa del Producto y Fraude en la Fabricación"},
+        "category": {"en": "Safety & Compliance", "es": "Seguridad y Cumplimiento"},
         "required": "ALL",
         "recurrence": "Annual",
         "passingScore": 80,
         "video": {"en": "https://www.youtube.com/embed/IN_y9l1jBAo", "es": "https://www.youtube.com/embed/ZYg70Mnd9HQ"},
-        "description": "Protecting product from intentional tampering, sabotage, and fraud: insider threats, site security, supplier conformance, and how to report a concern.",
+        "description": {"en": "Protecting product from intentional tampering, sabotage, and fraud: insider threats, site security, supplier conformance, and how to report a concern.", "es": "Protección del producto contra la alteración intencional, el sabotaje y el fraude: amenazas internas, seguridad del sitio, conformidad de proveedores y cómo reportar una preocupación."},
         "questions": [
           {
             "q": {
@@ -694,13 +694,13 @@ const CONFIG = {
       },
       {
         "id": "bloodborne",
-        "title": "Bloodborne Pathogen",
-        "category": "Safety & Compliance",
+        "title": {"en": "Bloodborne Pathogen", "es": "Patógenos de Transmisión Sanguínea"},
+        "category": {"en": "Safety & Compliance", "es": "Seguridad y Cumplimiento"},
         "required": "ALL",
         "recurrence": "Annual",
         "passingScore": 80,
         "video": {"en": "https://www.youtube.com/embed/XcydFv1wrvA", "es": "https://www.youtube.com/embed/rnvQLCQufNs"},
-        "description": "Managing exposure to blood and bodily fluids to protect product and people: incident response, decontamination, biohazard handling, and required reporting (PRO-035-000).",
+        "description": {"en": "Managing exposure to blood and bodily fluids to protect product and people: incident response, decontamination, biohazard handling, and required reporting (PRO-035-000).", "es": "Manejo de la exposición a sangre y fluidos corporales para proteger el producto y a las personas: respuesta a incidentes, descontaminación, manejo de residuos peligrosos biológicos y reportes requeridos (PRO-035-000)."},
         "questions": [
           {
             "q": {
@@ -906,8 +906,8 @@ const CONFIG = {
       },
       {
         "id": "forklift",
-        "title": "Forklift Safety and Operation",
-        "category": "Safety & Compliance",
+        "title": {"en": "Forklift Safety and Operation", "es": "Seguridad y Operación de Montacargas"},
+        "category": {"en": "Safety & Compliance", "es": "Seguridad y Cumplimiento"},
         "required": [
           "Electrical",
           "MtlDec-Foreman",
@@ -952,7 +952,7 @@ const CONFIG = {
         "recurrence": "Triennial",
         "passingScore": 80,
         "video": {"en": "https://www.youtube.com/embed/ABhfOXv3ibs", "es": "https://www.youtube.com/embed/58thVLkisBU"},
-        "description": "Safe powered-industrial-truck operation under OSHA 29 CFR 1910.178: authorization, pre-operation inspection, propane handling, travel and pedestrian rules, load handling, and refresher requirements.",
+        "description": {"en": "Safe powered-industrial-truck operation under OSHA 29 CFR 1910.178: authorization, pre-operation inspection, propane handling, travel and pedestrian rules, load handling, and refresher requirements.", "es": "Operación segura de montacargas conforme a OSHA 29 CFR 1910.178: autorización, inspección previa a la operación, manejo de propano, reglas de circulación y peatones, manejo de cargas y requisitos de actualización."},
         "questions": [
           {
             "q": {
@@ -1170,7 +1170,7 @@ const CONFIG = {
   /* ---- language ---- */
   const LANG_KEY = 'csc_tp_lang';
   function getLang(){ try{ return localStorage.getItem(LANG_KEY) || 'en'; }catch(_){ return 'en'; } }
-  function setLang(l){ try{ localStorage.setItem(LANG_KEY, l); }catch(_){}; document.documentElement.lang=l; renderLangToggle(); rerender(); }
+  function setLang(l){ try{ localStorage.setItem(LANG_KEY, l); }catch(_){}; document.documentElement.lang=l; renderLangToggle(); applyChrome(); buildTabs(); rerender(); }
   function LX(o){ if(o==null) return ''; if(typeof o==='string') return o; return o[getLang()]||o.en||''; }
   const I18N = {
     en:{ take:'Take the test \u25b8', start:'Start \u25b8', allTrainings:'\u2190 All trainings',
@@ -1189,7 +1189,19 @@ const CONFIG = {
       signedAs:'Signed in as', setName:'Set your name', change:'Change',
       beforeBegin:'Before you begin', beforeBeginSub:'Enter your name so your test attempts are recorded under the right person.',
       fullName:'Full name', empId:'Employee ID', optional:'optional', save:'Save & continue', cancel:'Cancel',
-      questionsWord:'questions', passWord:'pass' },
+      questionsWord:'questions', passWord:'pass',
+      tabTrainings:'Trainings', tabRecords:'Records', catalogTitle:'Trainings',
+      catalogSub:'Watch the training, then take the test right here. Your result is recorded automatically.',
+      recordsTitle:'Completion Records',
+      recordsSub:'Every test attempt, newest first. Graded and stored separately from the trainings so nothing is overwritten.',
+      filterPH:'Filter by name or training\u2026', allResults:'All results', optPass:'Pass', optFail:'Fail',
+      refresh:'Refresh', exportCsv:'Export CSV', loadingRecords:'Loading records\u2026',
+      thDate:'Date', thName:'Name', thTraining:'Training', thLang:'Lang', thScore:'Score', thResult:'Result',
+      noAttempts:'No attempts recorded yet', noAttemptsLocal:'Connect CONFIG.records.endpoint, then completed tests will appear here.',
+      noAttemptsSub:'Once someone completes a test, every attempt shows up here.',
+      attemptsShown:(n)=>`${n} attempt${n!==1?'s':''} shown.`,
+      wmSub:'Training Portal', hubBtn:'Return to Info Hub',
+      footerNote:'Internal use only \u2022 Garden Grove, CA \u2022 Training records retained per SQF requirements' },
     es:{ take:'Tomar el examen \u25b8', start:'Comenzar \u25b8', allTrainings:'\u2190 Todas las capacitaciones',
       knowledge:'Evaluaci\u00f3n de conocimientos', repeats:'Se repite', submit:'Enviar examen',
       qof:(n,m)=>`Pregunta ${n} de ${m}`, answerAll:'Por favor responda todas las preguntas antes de enviar.',
@@ -1206,12 +1218,28 @@ const CONFIG = {
       signedAs:'Sesi\u00f3n iniciada como', setName:'Escriba su nombre', change:'Cambiar',
       beforeBegin:'Antes de comenzar', beforeBeginSub:'Escriba su nombre para que sus intentos se registren con la persona correcta.',
       fullName:'Nombre completo', empId:'N\u00famero de empleado', optional:'opcional', save:'Guardar y continuar', cancel:'Cancelar',
-      questionsWord:'preguntas', passWord:'aprobar' }
+      questionsWord:'preguntas', passWord:'aprobar',
+      tabTrainings:'Capacitaciones', tabRecords:'Registros', catalogTitle:'Capacitaciones',
+      catalogSub:'Vea la capacitaci\u00f3n y luego tome el examen aqu\u00ed mismo. Su resultado se registra autom\u00e1ticamente.',
+      recordsTitle:'Registros de Finalizaci\u00f3n',
+      recordsSub:'Cada intento de examen, del m\u00e1s reciente al m\u00e1s antiguo. Calificado y almacenado por separado para que nada se sobrescriba.',
+      filterPH:'Filtrar por nombre o capacitaci\u00f3n\u2026', allResults:'Todos los resultados', optPass:'Aprobado', optFail:'Reprobado',
+      refresh:'Actualizar', exportCsv:'Exportar CSV', loadingRecords:'Cargando registros\u2026',
+      thDate:'Fecha', thName:'Nombre', thTraining:'Capacitaci\u00f3n', thLang:'Idioma', thScore:'Puntaje', thResult:'Resultado',
+      noAttempts:'A\u00fan no hay intentos registrados', noAttemptsLocal:'Conecte CONFIG.records.endpoint y los ex\u00e1menes completados aparecer\u00e1n aqu\u00ed.',
+      noAttemptsSub:'Cuando alguien complete un examen, cada intento aparecer\u00e1 aqu\u00ed.',
+      attemptsShown:(n)=>`${n} intento${n!==1?'s':''} mostrado${n!==1?'s':''}.`,
+      wmSub:'Portal de Capacitaci\u00f3n', hubBtn:'Volver al Centro de Informaci\u00f3n',
+      footerNote:'Solo para uso interno \u2022 Garden Grove, CA \u2022 Registros de capacitaci\u00f3n conservados seg\u00fan los requisitos de SQF' }
   };
   function T(k){ return (I18N[getLang()]||I18N.en)[k]; }
+  const REC={ en:{}, es:{Once:'Una vez',Monthly:'Mensual',Quarterly:'Trimestral',Annual:'Anual',Biennial:'Bienal',Triennial:'Trienal'} };
+  function recLabel(r){ return (REC[getLang()]||{})[r] || r; }
+  function resultLabel(v){ if(getLang()==='es') return v==='Pass'?'Aprobado':(v==='Fail'?'Reprobado':v); return v; }
+  function applyChrome(){ $('wm-sub').textContent=T('wmSub'); $('hub-link').textContent='\u2190 '+T('hubBtn'); $('footer-note').textContent=T('footerNote'); }
   function renderLangToggle(){
     const l=getLang();
-    $('langtog').innerHTML = `<button class="lt ${l==='en'?'on':''}" data-l="en">EN</button><button class="lt ${l==='es'?'on':''}" data-l="es">ES</button>`;
+    $('langtog').innerHTML = `<button class="lt ${l==='en'?'on':''}" data-l="en">English</button><button class="lt ${l==='es'?'on':''}" data-l="es">Español</button>`;
     $('langtog').querySelectorAll('.lt').forEach(b=> b.onclick=()=>{ if(getLang()!==b.dataset.l) setLang(b.dataset.l); });
   }
   function rerender(){
@@ -1265,9 +1293,9 @@ const CONFIG = {
   function isRequired(t, role){ return t.required==='ALL' || (Array.isArray(t.required) && t.required.includes(role)); }
 
   /* ---- tabs / views ---- */
-  const VIEWS=[{id:'trainings',label:'Trainings',count:()=>CONFIG.trainings.length},{id:'records',label:'Records'}];
+  const VIEWS=[{id:'trainings',labelKey:'tabTrainings',count:()=>CONFIG.trainings.length},{id:'records',labelKey:'tabRecords'}];
   function buildTabs(){
-    $('tabs').innerHTML=VIEWS.map(v=>`<button class="tab" role="tab" data-view="${v.id}" aria-selected="${v.id==='matrix'}">${esc(v.label)}${v.count?`<span class="cnt">${v.count()}</span>`:''}</button>`).join('');
+    $('tabs').innerHTML=VIEWS.map(v=>`<button class="tab" role="tab" data-view="${v.id}" aria-selected="${v.id===currentView}">${esc(T(v.labelKey))}${v.count?`<span class="cnt">${v.count()}</span>`:''}</button>`).join('');
     $('tabs').querySelectorAll('.tab').forEach(b=> b.onclick=()=>setView(b.dataset.view));
   }
   function setView(name, skipScroll){
@@ -1284,18 +1312,18 @@ const CONFIG = {
   function renderCatalog(){
     const cards=CONFIG.trainings.map(t=>`
       <div class="tcard reveal"><div class="body">
-        <h3>${esc(t.title)}</h3>
-        <div class="meta"><span class="chip chip-cat">${esc(t.category)}</span><span class="chip chip-rec">${esc(t.recurrence)}</span></div>
-        <p>${esc(t.description||'')}</p></div>
+        <h3>${esc(LX(t.title))}</h3>
+        <div class="meta"><span class="chip chip-cat">${esc(LX(t.category))}</span><span class="chip chip-rec">${esc(recLabel(t.recurrence))}</span></div>
+        <p>${esc(LX(t.description)||'')}</p></div>
         <div class="foot"><span class="qn">${(t.questions||[]).length} ${esc(T('questionsWord'))} \u00b7 ${esc(T('passWord'))} ${passScore(t)}%</span>
           <button class="btn sm" data-open="${esc(t.id)}">${esc(T('start'))}</button></div></div>`).join('');
-    $('view-trainings').innerHTML=`<div class="view-head"><h1 class="serif">Trainings</h1><p>Watch the training, then take the test right here. Your result is recorded automatically.</p></div><div class="grid">${cards}</div>`;
+    $('view-trainings').innerHTML=`<div class="view-head"><h1 class="serif">${esc(T('catalogTitle'))}</h1><p>${esc(T('catalogSub'))}</p></div><div class="grid">${cards}</div>`;
     $('view-trainings').querySelectorAll('[data-open]').forEach(b=> b.onclick=()=>openTraining(b.dataset.open));
   }
 
   /* ---- Detail + quiz ---- */
   function videoEmbed(t){
-    const _vs=LX(t.video); if(_vs) return `<div class="video-wrap"><iframe src="${esc(_vs)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="${esc(t.title)}"></iframe></div>`;
+    const _vs=LX(t.video); if(_vs) return `<div class="video-wrap"><iframe src="${esc(_vs)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="${esc(LX(t.title))}"></iframe></div>`;
     return `<div class="video-wrap"><div class="video-ph"><b>${esc(T('videoSoon'))}</b>${esc(T('videoSoonSub'))}</div></div>`;
   }
   function openTraining(id){
@@ -1303,11 +1331,11 @@ const CONFIG = {
     $('view-detail').innerHTML=`
       <button class="btn secondary sm" id="back-cat" style="margin-bottom:16px">${esc(T('allTrainings'))}</button>
       <div class="detail-card reveal">
-        <div class="detail-head"><h2 class="serif">${esc(t.title)}</h2>
-          <div class="meta"><span class="chip chip-cat">${esc(t.category)}</span><span class="chip chip-rec">${esc(T('repeats'))}: ${esc(t.recurrence)}</span></div></div>
+        <div class="detail-head"><h2 class="serif">${esc(LX(t.title))}</h2>
+          <div class="meta"><span class="chip chip-cat">${esc(LX(t.category))}</span><span class="chip chip-rec">${esc(T('repeats'))}: ${esc(recLabel(t.recurrence))}</span></div></div>
         ${videoEmbed(t)}
         <div class="detail-body">
-          <p class="lead">${esc(t.description||'')}</p>
+          <p class="lead">${esc(LX(t.description)||'')}</p>
           <div class="quiz-intro"><div class="txt"><h4 class="serif">${esc(T('knowledge'))}</h4><p>${esc(T('passNeed')((t.questions||[]).length, passScore(t)))}</p></div>
             <button class="btn" id="start-quiz">${esc(T('take'))}</button></div>
           <div id="quiz-mount"></div>
@@ -1342,7 +1370,7 @@ const CONFIG = {
     const sub=$('submit-quiz'); sub.disabled=true; sub.textContent=T('grading');
     qs.forEach((q,i)=> document.querySelectorAll(`input[name="q${i}"]`).forEach(inp=>inp.disabled=true));
     const u=taker||{name:'Unknown'};
-    const p=new URLSearchParams({ action:'grade', trainingId:t.id, title:t.title, name:u.name, id:u.id||'', answers:chosen.join(','), lang:getLang(), ua:(navigator.userAgent||'').slice(0,120) });
+    const _ttl=(typeof t.title==='string')?t.title:(t.title.en||''); const p=new URLSearchParams({ action:'grade', trainingId:t.id, title:_ttl, name:u.name, id:u.id||'', answers:chosen.join(','), lang:getLang(), ua:(navigator.userAgent||'').slice(0,120) });
     jsonp(ep+'?'+p.toString(), (data,err)=>{
       if(err||!data||!data.ok){ sub.disabled=false; sub.textContent=T('submit'); qs.forEach((q,i)=>document.querySelectorAll(`input[name="q${i}"]`).forEach(inp=>inp.disabled=false));
         warn.textContent=T('gradeFail'); warn.style.display='inline'; return; }
@@ -1360,7 +1388,7 @@ const CONFIG = {
     const card=document.createElement('div'); card.className='result '+(pass?'pass':'fail');
     card.innerHTML=`<div class="ring">${data.percent}%</div>
       <h2 class="serif">${esc(pass?T('passed'):T('failed'))}</h2>
-      <div class="sub">${esc(T('scoreLine')(u.name,data.correct,data.total,t.title))}</div>
+      <div class="sub">${esc(T('scoreLine')(u.name,data.correct,data.total,LX(t.title)))}</div>
       <div class="logged">${esc(T('recorded'))}</div>
       ${(data.wrong&&data.wrong.length)?`<div class="muted-note" style="margin-top:6px">${esc(T('reviewMissed'))}</div>`:''}
       <div class="quiz-actions" style="justify-content:center;margin-top:18px">
@@ -1377,11 +1405,11 @@ const CONFIG = {
   /* ---- Records ---- */
   let recordCache=[];
   function renderRecords(){
-    $('view-records').innerHTML=`<div class="view-head"><h1 class="serif">Completion Records</h1><p>Every test attempt, newest first. Graded and stored separately from the trainings so nothing is overwritten.</p></div>
-      <div class="toolbar"><span class="field"><input id="rec-search" type="text" placeholder="Filter by name or training\u2026"></span>
-      <span class="field"><select id="rec-result"><option value="">All results</option><option>Pass</option><option>Fail</option></select></span>
-      <span class="spacer"></span><button class="btn secondary sm" id="rec-refresh">Refresh</button><button class="btn secondary sm" id="rec-csv">Export CSV</button></div>
-      <div id="rec-mount"><p class="muted-note">Loading records\u2026</p></div>`;
+    $('view-records').innerHTML=`<div class="view-head"><h1 class="serif">${esc(T('recordsTitle'))}</h1><p>${esc(T('recordsSub'))}</p></div>
+      <div class="toolbar"><span class="field"><input id="rec-search" type="text" placeholder="${esc(T('filterPH'))}"></span>
+      <span class="field"><select id="rec-result"><option value="">${esc(T('allResults'))}</option><option value="Pass">${esc(T('optPass'))}</option><option value="Fail">${esc(T('optFail'))}</option></select></span>
+      <span class="spacer"></span><button class="btn secondary sm" id="rec-refresh">${esc(T('refresh'))}</button><button class="btn secondary sm" id="rec-csv">${esc(T('exportCsv'))}</button></div>
+      <div id="rec-mount"><p class="muted-note">${esc(T('loadingRecords'))}</p></div>`;
     const draw=()=>fetchRecords((records,info)=>{ recordCache=records; paintRecords(records,info); });
     $('rec-refresh').onclick=draw; $('rec-search').oninput=()=>paintRecords(recordCache); $('rec-result').onchange=()=>paintRecords(recordCache); $('rec-csv').onclick=exportCsv;
     draw();
@@ -1391,10 +1419,10 @@ const CONFIG = {
     const q=($('rec-search')?.value||'').toLowerCase(); const rf=($('rec-result')?.value||'');
     const filtered=(records||[]).filter(r=>{ const hay=`${r.Name||''} ${r.Training||''} ${r['Employee ID']||''}`.toLowerCase(); return (!q||hay.includes(q)) && (!rf||(r.Result||'')===rf); });
     const mount=$('rec-mount');
-    if(!filtered.length){ mount.innerHTML=`<div class="empty"><b>No attempts recorded yet</b>${info&&info.local?'Connect CONFIG.records.endpoint, then completed tests will appear here.':'Once someone completes a test, every attempt shows up here.'}</div>`; return; }
-    mount.innerHTML=`<div class="tbl-wrap"><table class="records"><thead><tr><th>Date</th><th>Name</th><th>Training</th><th>Lang</th><th>Score</th><th>%</th><th>Result</th></tr></thead>
-      <tbody>${filtered.map(r=>`<tr><td>${fmtDate(r.Timestamp)}</td><td>${esc(r.Name||'')}</td><td>${esc(r.Training||'')}</td><td>${esc((r.Language||'').toString().toUpperCase())}</td><td>${esc(r.Score)}/${esc(r.Total)}</td><td>${esc(r.Percent)}%</td><td class="${(r.Result||'')==='Pass'?'res-pass':'res-fail'}">${esc(r.Result||'')}</td></tr>`).join('')}</tbody></table></div>
-      <p class="muted-note" style="margin-top:10px">${filtered.length} attempt${filtered.length!==1?'s':''} shown.</p>`;
+    if(!filtered.length){ mount.innerHTML=`<div class="empty"><b>${esc(T('noAttempts'))}</b>${info&&info.local?esc(T('noAttemptsLocal')):esc(T('noAttemptsSub'))}</div>`; return; }
+    mount.innerHTML=`<div class="tbl-wrap"><table class="records"><thead><tr><th>${esc(T('thDate'))}</th><th>${esc(T('thName'))}</th><th>${esc(T('thTraining'))}</th><th>${esc(T('thLang'))}</th><th>${esc(T('thScore'))}</th><th>%</th><th>${esc(T('thResult'))}</th></tr></thead>
+      <tbody>${filtered.map(r=>`<tr><td>${fmtDate(r.Timestamp)}</td><td>${esc(r.Name||'')}</td><td>${esc(r.Training||'')}</td><td>${esc((r.Language||'').toString().toUpperCase())}</td><td>${esc(r.Score)}/${esc(r.Total)}</td><td>${esc(r.Percent)}%</td><td class="${(r.Result||'')==='Pass'?'res-pass':'res-fail'}">${esc(resultLabel(r.Result||''))}</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted-note" style="margin-top:10px">${esc(T('attemptsShown')(filtered.length))}</p>`;
   }
   function exportCsv(){
     const rows=recordCache||[]; const head=['Timestamp','Name','Employee ID','Training','Language','Score','Total','Percent','Result'];
@@ -1404,7 +1432,7 @@ const CONFIG = {
 
   /* ---- boot ---- */
   document.documentElement.lang=getLang();
-  renderLangToggle(); buildTabs(); renderCatalog();
+  renderLangToggle(); applyChrome(); buildTabs(); renderCatalog();
 })();
 </script>
 </body>
