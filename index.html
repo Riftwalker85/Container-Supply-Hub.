@@ -195,6 +195,8 @@ main{max-width:1240px;margin:0 auto;padding:30px 28px 70px}
 /* name + optional one-line description stack (used on the AI Resources card) */
 .card-links li a .lk-logo{width:22px;height:22px;flex:none;border-radius:5px;object-fit:contain;background:#fff}
 .card-links li a.withdesc .lk-logo{margin-top:2px}
+.card-links li a .lk-ico{width:22px;height:22px;flex:none;display:flex;align-items:center;justify-content:center;font-size:1.05rem;line-height:1}
+.card-links li a.withdesc .lk-ico{margin-top:1px}
 .card-links li a .lk-text{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
 .card-links li a.withdesc{align-items:flex-start}
 .card-links li a.withdesc .lk-name{font-weight:600;color:var(--navy)}
@@ -296,13 +298,6 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
 
   <div class="section-head">
     <span class="num">03</span>
-    <h2 class="serif">Quick Links</h2>
-    <span class="rule"></span>
-  </div>
-  <div class="quick-grid" id="quick-mount"></div>
-
-  <div class="section-head">
-    <span class="num">04</span>
     <h2 class="serif">Resources &amp; Reference</h2>
     <span class="rule"></span>
   </div>
@@ -337,7 +332,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
    • href = 'https://…'       -> an outside website (shows ↗ icon)
    • add  new:true            -> shows a small green "NEW" tag
    • add  ext:true            -> forces the external ↗ icon
-   • add  hrefMobile:'…'      -> (quick links only) opens a different URL on phones/tablets
+   • add  hrefMobile:'…'      -> opens a different URL on phones/tablets
    • add  desc:'…'            -> a one-line description under the link (used on the AI Resources card)
    • add  logo:'https://…'    -> a small site icon shown to the left of the link
 
@@ -347,7 +342,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.72)}
 const CONFIG = {
 
   /* footer info: bump these whenever you revise the page */
-  revision: '1.2',
+  revision: '1.3',
   updated:  'Jun 2026',
 
   /* the banner at the top. Edit text or set show:false */
@@ -373,17 +368,32 @@ const CONFIG = {
     viewUrl: 'https://calendar.google.com/calendar/u/0?cid=Y19xbWE3djk4aWV0Z3U0cTEyYmszdmFicGpoOEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t'
   },
 
-  /* QUICK LINKS row — icon = any emoji/letter; sub = optional caption */
-  quickLinks: [
-    { icon:'⚗',  label:'SDS Lookup',          sub:'Safety data sheets',href:'https://drive.google.com/drive/folders/1NEEK_TiGOFLqBoL34-cnuJrVwd-naORT?usp=sharing', ext:true },
-    { icon:'🔧', label:'Maintenance Request',  sub:'Submit a request',  href:'https://docs.google.com/spreadsheets/d/1yyqt0HiHejtjP3cVccL9r2YCGsMM6kjKdxt3t9Omxj4/edit?gid=1614565761#gid=1614565761', hrefMobile:'https://sites.google.com/cscmfg.com/csc-tablet-dashboard/?pli=1&authuser=2', ext:true },
-    { icon:'📞', label:'Staff Directory',      sub:'Requires company Google login',href:'https://contacts.google.com/directory' },
-    { icon:'🎓', label:'Training Portal',      sub:'Courses & records',  href:'training-portal.html' },
-    { icon:'📦', label:'Inventory Dashboard',   sub:'Live stock levels',  href:'https://script.google.com/a/macros/cscmfg.com/s/AKfycbxRTIkPv-Hsly1mO-VY4377fselSDH_WUI3MfSWb_T4UHZYLoVgSUKSVihAYKEBOFvlnw/exec', ext:true }
-  ],
-
-  /* CATEGORY CARDS — each has a title, accent color, optional tag, and links */
+  /* CATEGORY CARDS — each has a title, accent color, optional tag, and links.
+     A link may show either logo:'https://…' (a site icon) OR icon:'⚗' (an emoji). */
   categories: [
+    {
+      title:'Safety & Compliance',
+      accent:'#2e7d32', tag:'SQF',
+      links:[
+        { name:'Training Portal', icon:'🎓', desc:'Watch trainings and take the comprehension tests.', href:'training-portal.html' },
+        { name:'SDS Lookup',      icon:'⚗',  desc:'Safety data sheets for chemicals used on site.', href:'https://drive.google.com/drive/folders/1NEEK_TiGOFLqBoL34-cnuJrVwd-naORT?usp=sharing', ext:true }
+      ]
+    },
+    {
+      title:'Operations & Dashboards',
+      accent:'#c77700', tag:'Live',
+      links:[
+        { name:'Maintenance Request', icon:'🔧', desc:'Submit a maintenance or repair request.', href:'https://docs.google.com/spreadsheets/d/1yyqt0HiHejtjP3cVccL9r2YCGsMM6kjKdxt3t9Omxj4/edit?gid=1614565761#gid=1614565761', hrefMobile:'https://sites.google.com/cscmfg.com/csc-tablet-dashboard/?pli=1&authuser=2', ext:true },
+        { name:'Inventory Dashboard', icon:'📦', desc:'Live finished-goods stock levels.', href:'https://script.google.com/a/macros/cscmfg.com/s/AKfycbxRTIkPv-Hsly1mO-VY4377fselSDH_WUI3MfSWb_T4UHZYLoVgSUKSVihAYKEBOFvlnw/exec', ext:true }
+      ]
+    },
+    {
+      title:'Company & People',
+      accent:'#6a3fb0', tag:'Staff',
+      links:[
+        { name:'Staff Directory', icon:'📞', desc:'Company phone & email directory (Google login required).', href:'https://contacts.google.com/directory' }
+      ]
+    },
     {
       title:'AI Resources',
       accent:'#2540bf', tag:'AI',
@@ -398,7 +408,7 @@ const CONFIG = {
       title:'Tools & Utilities',
       accent:'#1f7a8c', tag:'Calc',
       links:[
-        { name:'Warehouse Exhaust Fan Calculator', href:'fancalc.html', new:true }
+        { name:'Warehouse Exhaust Fan Calculator', icon:'🌀', desc:'Sizing tool for warehouse exhaust fans.', href:'fancalc.html', new:true }
       ]
     }
   ]
@@ -455,22 +465,17 @@ const CONFIG = {
     return false;
   })();
 
-  document.getElementById('quick-mount').innerHTML = CONFIG.quickLinks.map((q,i)=>{
-    const href = (IS_MOBILE && q.hrefMobile) ? q.hrefMobile : (q.href||'#');
-    const isExt = q.ext || /^https?:\/\//.test(href);
-    return `<a class="quick reveal" style="animation-delay:${i*40}ms" href="${esc(href)}" ${isExt?'target="_blank" rel="noopener"':''}>
-       <span class="ico">${esc(q.icon||'•')}</span>
-       <span class="label">${esc(q.label)}${q.sub?`<small>${esc(q.sub)}</small>`:''}</span>
-     </a>`;
-  }).join('');
-
   document.getElementById('cat-mount').innerHTML = CONFIG.categories.map((cat,i)=>{
     const accent = esc(cat.accent||'#2540bf');
     const links = cat.links.map(l=>{
-      const isExt = l.ext || /^https?:\/\//.test(l.href||'');
+      const href = (IS_MOBILE && l.hrefMobile) ? l.hrefMobile : (l.href||'#');
+      const isExt = l.ext || /^https?:\/\//.test(href);
       const cls = [isExt?'ext':'', l.desc?'withdesc':''].filter(Boolean).join(' ');
-      return `<li><a class="${cls}" href="${esc(l.href||'#')}" ${isExt?'target="_blank" rel="noopener"':''}>
-                ${l.logo?`<img class="lk-logo" src="${esc(l.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}
+      const media = l.logo
+        ? `<img class="lk-logo" src="${esc(l.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+        : (l.icon ? `<span class="lk-ico">${esc(l.icon)}</span>` : '');
+      return `<li><a class="${cls}" href="${esc(href)}" ${isExt?'target="_blank" rel="noopener"':''}>
+                ${media}
                 <span class="lk-text"><span class="lk-name">${esc(l.name)}</span>${l.desc?`<small class="lk-desc">${esc(l.desc)}</small>`:''}</span>
                 ${l.new?'<span class="pill-new">New</span>':''}
                 <span class="arrow"></span>
