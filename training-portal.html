@@ -52,11 +52,12 @@ header.topbar{background:var(--surface);border-bottom:1px solid var(--line);
 /* ── tabs ── */
 .tabbar{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:59px;z-index:40}
 .tabbar-inner{max-width:1240px;margin:0 auto;padding:0 28px;display:flex;gap:4px;overflow-x:auto}
-.tab{appearance:none;border:none;background:none;font:inherit;cursor:pointer;white-space:nowrap;
+.tab{appearance:none;border:none;background:none;font:inherit;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;
   padding:14px 16px;font-size:.92rem;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
 .tab:hover{color:var(--navy)}
 .tab[aria-selected="true"]{color:var(--royal);border-bottom-color:var(--royal)}
 .tab .cnt{font-size:.7rem;background:var(--sky);color:var(--royal);border-radius:999px;padding:1px 8px;margin-left:6px;font-weight:700}
+.tab .tab-ext{font-size:.72rem;opacity:.5;margin-left:4px}
 
 /* ── layout ── */
 main{max-width:1240px;margin:0 auto;padding:28px 28px 72px}
@@ -1190,7 +1191,7 @@ const CONFIG = {
       beforeBegin:'Before you begin', beforeBeginSub:'Enter your name so your test attempts are recorded under the right person.',
       fullName:'Full name', empId:'Employee ID', optional:'optional', save:'Save & continue', cancel:'Cancel',
       questionsWord:'questions', passWord:'pass',
-      tabTrainings:'Trainings', tabRecords:'Records', catalogTitle:'Trainings',
+      tabTrainings:'Trainings', tabRecords:'Records', tabMatrix:'Training Matrix', catalogTitle:'Trainings',
       catalogSub:'Watch the training, then take the test right here. Your result is recorded automatically.',
       recordsTitle:'Completion Records',
       recordsSub:'Every test attempt, newest first. Graded and stored separately from the trainings so nothing is overwritten.',
@@ -1219,7 +1220,7 @@ const CONFIG = {
       beforeBegin:'Antes de comenzar', beforeBeginSub:'Escriba su nombre para que sus intentos se registren con la persona correcta.',
       fullName:'Nombre completo', empId:'N\u00famero de empleado', optional:'opcional', save:'Guardar y continuar', cancel:'Cancelar',
       questionsWord:'preguntas', passWord:'aprobar',
-      tabTrainings:'Capacitaciones', tabRecords:'Registros', catalogTitle:'Capacitaciones',
+      tabTrainings:'Capacitaciones', tabRecords:'Registros', tabMatrix:'Matriz de Capacitación', catalogTitle:'Capacitaciones',
       catalogSub:'Vea la capacitaci\u00f3n y luego tome el examen aqu\u00ed mismo. Su resultado se registra autom\u00e1ticamente.',
       recordsTitle:'Registros de Finalizaci\u00f3n',
       recordsSub:'Cada intento de examen, del m\u00e1s reciente al m\u00e1s antiguo. Calificado y almacenado por separado para que nada se sobrescriba.',
@@ -1293,10 +1294,14 @@ const CONFIG = {
   function isRequired(t, role){ return t.required==='ALL' || (Array.isArray(t.required) && t.required.includes(role)); }
 
   /* ---- tabs / views ---- */
-  const VIEWS=[{id:'trainings',labelKey:'tabTrainings',count:()=>CONFIG.trainings.length},{id:'records',labelKey:'tabRecords'}];
+  const VIEWS=[{id:'trainings',labelKey:'tabTrainings',count:()=>CONFIG.trainings.length},{id:'matrix',labelKey:'tabMatrix',href:'https://docs.google.com/spreadsheets/d/1KEGCH63neswJAVO0cnSwrCSWB1Q7N8ukpNrJGCrhPfU/edit?usp=sharing',ext:true},{id:'records',labelKey:'tabRecords'}];
   function buildTabs(){
-    $('tabs').innerHTML=VIEWS.map(v=>`<button class="tab" role="tab" data-view="${v.id}" aria-selected="${v.id===currentView}">${esc(T(v.labelKey))}${v.count?`<span class="cnt">${v.count()}</span>`:''}</button>`).join('');
-    $('tabs').querySelectorAll('.tab').forEach(b=> b.onclick=()=>setView(b.dataset.view));
+    $('tabs').innerHTML=VIEWS.map(v=>{
+      const inner=`${esc(T(v.labelKey))}${v.count?`<span class="cnt">${v.count()}</span>`:''}`;
+      if(v.href) return `<a class="tab" role="tab" href="${esc(v.href)}" ${v.ext?'target="_blank" rel="noopener"':''}>${inner}<span class="tab-ext">\u2197</span></a>`;
+      return `<button class="tab" role="tab" data-view="${v.id}" aria-selected="${v.id===currentView}">${inner}</button>`;
+    }).join('');
+    $('tabs').querySelectorAll('button.tab').forEach(b=> b.onclick=()=>setView(b.dataset.view));
   }
   function setView(name, skipScroll){
     currentView=name;
